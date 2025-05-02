@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hill Climb Racing 2 Records</title>
+    <script>
+        let allData = []; // Store all fetched data for filtering and searching
+        let currentDataType = ''; // Track the current data type for filtering
+
+        // Function to fetch data from load_data.php and display it
+        function fetchData(dataType) {
+            const container = document.getElementById('data-container');
+            const filterContainer = document.getElementById('filter-container');
+
+            if (currentDataType === dataType && container.style.display === 'block') {
+                // If the same data type is already displayed, hide the container and filters
+                container.style.display = 'none';
+                if (filterContainer) filterContainer.style.display = 'none'; // Hide filters
+                currentDataType = ''; // Reset the current data type
+                return;
+            }
+
+            currentDataType = dataType; // Set the current data type
+            container.style.display = 'block'; // Ensure the container is visible
+
+            // Show filters only for "records"
+            if (dataType === 'records') {
+                if (filterContainer) filterContainer.style.display = 'flex'; // Show filters
+            } else {
+                if (filterContainer) filterContainer.style.display = 'none'; // Hide filters
+            }
+
+            fetch('load_data.php?type=' + dataType)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                        container.innerHTML = '<p style="color:red;">' + data.error + '</p>';
+                    } else {
+                        allData = data; // Store data for filtering
+                        displayData(data, dataType);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    container.innerHTML = '<p style="color:red;">Error fetching data from server.</p>';
+                });
+        }
+
+        // Function to fetch and display summary statistics
+        function fetchSummary() {
+            fetch('load_data.php?type=records')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                        document.getElementById('summary-container').innerHTML = '<p style="color:red;">' + data.error + '</p>';
+                    } else {
+                        displaySummary(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    document.getElementById('summary-container').innerHTML = '<p style="color:red;">Error fetching summary data from server.</p>';
+                });
+        }
+
+        // Function to display summary statistics
+        function displaySummary(data) {
+            const summaryContainer = document.getElementById('summary-container');
+            const playerRecords = {};
+            const vehicleDistances = {};
+
+            data.forEach(record => {
+                // Count records per player
+                playerRecords[record.player_name] = (playerRecords[record.player_name] || 0) + 1;
+
+                // Sum distances per vehicle
+                vehicleDistances[record.vehicle_name] = (vehicleDistances[record.vehicle_name] || 0) + record.distance;
+            });
+
+            // Find the best player and best vehicle
+            const bestPlayer = Object.keys(playerRecords).reduce((a, b) => playerRecords[a] > playerRecords[b] ? a : b);
+            const bestVehicle = Object.keys(vehicleDistances).reduce((a, b) => vehicleDistances[a] > vehicleDistances[b] ? a : b);
+
+            summaryContainer.innerHTML = `
+                <h2>Summary</h2>
+                <div class="summary-box">
+                    <p><strong>Best Player:</strong> ${bestPlayer} (${playerRecords[bestPlayer]} records)</p>
+                    <p><strong>Best Vehicle:</strong> ${bestVehicle} (${vehicleDistances[bestVehicle]} total distance)</p>
+                </div>
+            `;
+        }
+
+        // Function to display the fetched data
+        function displayData(data, dataType) {
+            const container = document.getElementById('data-container');
+            container.innerHTML = ''; // Clear the container
+
+            // Add search and filter options for records if not already added
+            if (dataType === 'records' && !document.getElementById('filter-container')) {
+                addSearchAndFilter();
+            }
+
+            container.innerHTML += '<h2>' + dataType.toUpperCase() + '</h2>'; // Add a heading
+
+            if (data.length === 0) {
+                container.innerHTML += '<p>No data available.</p>';
+                return;
+            }
+
+            let tableHTML = '<table>';
+            if (dataType === 'maps') {
+                tableHTML += '<tr><th>Map ID</th><th>Map Name</th></tr>';
+                data.forEach(item => {
+                    tableHTML += `<tr><td>${item.idMap}</td><td>${item.nameMap}</td></tr>`;
+                });
+            } else if (dataType === 'vehicles') {
+                tableHTML += '<tr><th>Vehicle ID</th><th>Vehicle Name</th></tr>';
+                data.forEach(item => {
+                    tableHTML += `<tr><td>${item.idVehicle}</td><td>${item.nameVehicle}</td></tr>`;
+                });
+            } else if (dataType === 'players') {
+                tableHTML += '<tr><th>Player ID</th><th>Player Name</th><th>Country</th></tr>';
+                data.forEach(item => {
+                    tableHTML += `<tr><td>${item.idPlayer}</td><td>${item.namePlayer}</td><td>${item.country}</td></tr>`;
+                });
+            } else if (dataType === 'records') {
+                tableHTML += '<tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr>';
+                data.forEach(item => {
+                    tableHTML += `<tr>
+                                    <td>${item.distance}</td>
+                                    <td>${item.map_name}</td>
+                                    <td>${item.vehicle_name}</td>
+                                    <td>${item.player_name}</td>
+                                    <td>${item.player_country}</td>
+                                  </tr>`;
+                });
+            }
+            tableHTML += '</table>';
+            container.innerHTML += tableHTML;
+        }
+
+        // Function to add search and filter options
+        function addSearchAndFilter() {
+            const container = document.getElementById('data-container');
+            const searchHTML = `
+                <div id="filter-container" class="filter-container">
+                    <input type="text" id="search-bar" placeholder="Search by player, map, or vehicle..." oninput="filterRecords()">
+                    <select id="map-filter" onchange="filterRecords()">
+                        <option value="">Filter by Map</option>
+                        ${[...new Set(allData.map(record => record.map_name))].map(map => `<option value="${map}">${map}</option>`).join('')}
+                    </select>
+                    <select id="vehicle-filter" onchange="filterRecords()">
+                        <option value="">Filter by Vehicle</option>
+                        ${[...new Set(allData.map(record => record.vehicle_name))].map(vehicle => `<option value="${vehicle}">${vehicle}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforebegin', searchHTML);
+        }
+
+        // Function to filter records based on search and dropdown filters
+        function filterRecords() {
+            const searchQuery = document.getElementById('search-bar').value.toLowerCase();
+            const mapFilter = document.getElementById('map-filter').value;
+            const vehicleFilter = document.getElementById('vehicle-filter').value;
+
+            const filteredData = allData.filter(record => {
+                const matchesSearch = record.player_name.toLowerCase().includes(searchQuery) ||
+                                      record.map_name.toLowerCase().includes(searchQuery) ||
+                                      record.vehicle_name.toLowerCase().includes(searchQuery);
+                const matchesMap = !mapFilter || record.map_name === mapFilter;
+                const matchesVehicle = !vehicleFilter || record.vehicle_name === vehicleFilter;
+
+                return matchesSearch && matchesMap && matchesVehicle;
+            });
+
+            displayData(filteredData, currentDataType);
+        }
+
+        // Fetch summary on page load
+        window.onload = () => {
+            fetchSummary();
+            populateFormOptions();
+            populateDeleteOptions();
+        };
+
+        // Fetch maps, vehicles, and players for the form
+        function populateFormOptions() {
+            fetch('load_data.php?type=maps')
+                .then(response => response.json())
+                .then(data => {
+                    const mapSelect = document.getElementById('map-select');
+                    data.forEach(map => {
+                        const option = document.createElement('option');
+                        option.value = map.idMap;
+                        option.textContent = map.nameMap;
+                        mapSelect.appendChild(option);
+                    });
+                });
+
+            fetch('load_data.php?type=vehicles')
+                .then(response => response.json())
+                .then(data => {
+                    const vehicleSelect = document.getElementById('vehicle-select');
+                    data.forEach(vehicle => {
+                        const option = document.createElement('option');
+                        option.value = vehicle.idVehicle;
+                        option.textContent = vehicle.nameVehicle;
+                        vehicleSelect.appendChild(option);
+                    });
+                });
+
+            fetch('load_data.php?type=players')
+                .then(response => response.json())
+                .then(data => {
+                    const playerSelect = document.getElementById('player-select');
+                    data.forEach(player => {
+                        const option = document.createElement('option');
+                        option.value = player.idPlayer;
+                        option.textContent = player.namePlayer;
+                        playerSelect.appendChild(option);
+                    });
+                });
+        }
+
+        // Submit a new record
+        function submitRecord(event) {
+            event.preventDefault();
+
+            const mapId = document.getElementById('map-select').value;
+            const vehicleId = document.getElementById('vehicle-select').value;
+            const distance = document.getElementById('distance-input').value;
+            const playerId = document.getElementById('player-select').value;
+            const newPlayerName = document.getElementById('new-player-input').value;
+            const country = document.getElementById('country-input').value;
+
+            if (!playerId && !newPlayerName) {
+                document.getElementById('form-message').textContent = 'Please select an existing player or add a new one.';
+                document.getElementById('form-message').style.color = 'red';
+                return;
+            }
+
+            const formData = {
+                mapId,
+                vehicleId,
+                distance,
+                playerId,
+                newPlayerName,
+                country
+            };
+
+            fetch('submit_record.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('form-message').textContent = 'Record submitted successfully!';
+                    document.getElementById('form-message').style.color = 'green';
+                    document.getElementById('record-form').reset();
+                } else {
+                    document.getElementById('form-message').textContent = 'Error: ' + data.error;
+                    document.getElementById('form-message').style.color = 'red';
+                }
+            })
+            .catch(error => {
+                document.getElementById('form-message').textContent = 'Error submitting record.';
+                document.getElementById('form-message').style.color = 'red';
+            });
+        }
+
+        // Fetch records for the delete form
+        function populateDeleteOptions() {
+            fetch('load_data.php?type=records')
+                .then(response => response.json())
+                .then(data => {
+                    const recordSelect = document.getElementById('record-select');
+                    recordSelect.innerHTML = '<option value="">Select a Record</option>'; // Clear existing options
+                    data.forEach(record => {
+                        const option = document.createElement('option');
+                        option.value = record.idRecord; // Assuming `idRecord` is the unique identifier for records
+                        option.textContent = `${record.distance} - ${record.map_name} - ${record.vehicle_name} - ${record.player_name}`;
+                        recordSelect.appendChild(option);
+                    });
+                });
+        }
+
+        // Delete a record
+        function deleteRecord(event) {
+            event.preventDefault();
+
+            const recordId = document.getElementById('record-select').value;
+
+            if (!recordId) {
+                document.getElementById('delete-message').textContent = 'Please select a record to delete.';
+                document.getElementById('delete-message').style.color = 'red';
+                return;
+            }
+
+            fetch('delete_record.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recordId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('delete-message').textContent = 'Record deleted successfully!';
+                    document.getElementById('delete-message').style.color = 'green';
+                    populateDeleteOptions(); // Refresh the delete options
+                } else {
+                    document.getElementById('delete-message').textContent = 'Error: ' + data.error;
+                    document.getElementById('delete-message').style.color = 'red';
+                }
+            })
+            .catch(error => {
+                document.getElementById('delete-message').textContent = 'Error deleting record.';
+                document.getElementById('delete-message').style.color = 'red';
+            });
+        }
+    </script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f9;
+        color: #333;
+      }
+      header {
+        background-color: #007bff;
+        color: white;
+        padding: 20px;
+        text-align: center;
+      }
+      header h1 {
+        margin: 0;
+      }
+      .header-buttons {
+        margin-top: 10px;
+      }
+      .header-buttons button {
+        margin: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #0056b3;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      .header-buttons button:hover {
+        background-color: #003d80;
+      }
+      main {
+        padding: 20px;
+        text-align: center;
+      }
+      h2 {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .summary-box {
+        background-color: #ffeb3b;
+        padding: 20px;
+        margin: 20px auto;
+        width: 80%;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        font-size: 18px;
+      }
+      .filter-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+      }
+      #search-bar, select {
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 90%;
+        margin: 20px auto;
+        background-color: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      tr:hover {
+        background-color: #f1f1f1;
+      }
+      .form-container {
+        background-color: #f9f9f9;
+        padding: 20px;
+        margin: 20px auto;
+        width: 80%;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .form-container h2 {
+        margin-bottom: 15px;
+      }
+      .form-container label {
+        font-weight: bold;
+      }
+      .form-container input, .form-container select, .form-container button {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      .form-container button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .form-container button:hover {
+        background-color: #0056b3;
+      }
+      #data-container {
+        display: none; /* Initially hide the data container */
+      }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Hill Climb Racing 2 Adventure Records</h1>
+        <div class="header-buttons">
+            <button onclick="fetchData('maps')">Get Maps</button>
+            <button onclick="fetchData('vehicles')">Get Vehicles</button>
+            <button onclick="fetchData('players')">Get Players</button>
+            <button onclick="fetchData('records')">Get Records</button>
+        </div>
+    </header>
+    <main>
+        <div id="summary-container"></div>
+        <div id="data-container"></div>
+        <div id="record-form-container" class="form-container">
+            <h2>Submit a New Record</h2>
+            <form id="record-form" onsubmit="submitRecord(event)">
+                <label for="map-select">Map:</label>
+                <select id="map-select" required>
+                    <option value="">Select a Map</option>
+                </select>
+                <br><br>
+                <label for="vehicle-select">Vehicle:</label>
+                <select id="vehicle-select" required>
+                    <option value="">Select a Vehicle</option>
+                </select>
+                <br><br>
+                <label for="distance-input">Distance:</label>
+                <input type="number" id="distance-input" placeholder="Enter distance" required>
+                <br><br>
+                <label for="player-select">Player:</label>
+                <select id="player-select">
+                    <option value="">Select an Existing Player</option>
+                </select>
+                <br><br>
+                <label for="new-player-input">Or Add New Player:</label>
+                <input type="text" id="new-player-input" placeholder="Enter new player name">
+                <br><br>
+                <label for="country-input">Country:</label>
+                <input type="text" id="country-input" placeholder="Enter country" required>
+                <br><br>
+                <button type="submit">Submit Record</button>
+            </form>
+            <p id="form-message" style="color: green;"></p>
+        </div>
+        <div id="delete-form-container" class="form-container">
+            <h2>Delete a Record</h2>
+            <form id="delete-form" onsubmit="deleteRecord(event)">
+                <label for="record-select">Record:</label>
+                <select id="record-select" required>
+                    <option value="">Select a Record</option>
+                </select>
+                <br><br>
+                <button type="submit">Delete Record</button>
+            </form>
+            <p id="delete-message" style="color: green;"></p>
+        </div>
+    </main>
+</body>
+</html>
