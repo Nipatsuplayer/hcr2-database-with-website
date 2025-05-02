@@ -3,30 +3,30 @@
 <head>
     <title>Hill Climb Racing 2 Records</title>
     <script>
-        let allData = []; // Store all fetched data for filtering and searching
-        let currentDataType = ''; // Track the current data type for filtering
+        let allData = []; 
+        let currentDataType = ''; 
 
-        // Function to fetch data from load_data.php and display it
+        
         function fetchData(dataType) {
             const container = document.getElementById('data-container');
             const filterContainer = document.getElementById('filter-container');
 
             if (currentDataType === dataType && container.style.display === 'block') {
-                // If the same data type is already displayed, hide the container and filters
+                
                 container.style.display = 'none';
-                if (filterContainer) filterContainer.style.display = 'none'; // Hide filters
-                currentDataType = ''; // Reset the current data type
+                if (filterContainer) filterContainer.style.display = 'none'; 
+                currentDataType = ''; 
                 return;
             }
 
-            currentDataType = dataType; // Set the current data type
-            container.style.display = 'block'; // Ensure the container is visible
+            currentDataType = dataType; 
+            container.style.display = 'block'; 
 
-            // Show filters only for "records"
+            
             if (dataType === 'records') {
-                if (filterContainer) filterContainer.style.display = 'flex'; // Show filters
+                if (filterContainer) filterContainer.style.display = 'flex'; 
             } else {
-                if (filterContainer) filterContainer.style.display = 'none'; // Hide filters
+                if (filterContainer) filterContainer.style.display = 'none'; 
             }
 
             fetch('load_data.php?type=' + dataType)
@@ -36,7 +36,7 @@
                         console.error('Error:', data.error);
                         container.innerHTML = '<p style="color:red;">' + data.error + '</p>';
                     } else {
-                        allData = data; // Store data for filtering
+                        allData = data; 
                         displayData(data, dataType);
                     }
                 })
@@ -46,7 +46,7 @@
                 });
         }
 
-        // Function to fetch and display summary statistics
+        
         function fetchSummary() {
             fetch('load_data.php?type=records')
                 .then(response => response.json())
@@ -64,21 +64,21 @@
                 });
         }
 
-        // Function to display summary statistics
+        
         function displaySummary(data) {
             const summaryContainer = document.getElementById('summary-container');
             const playerRecords = {};
             const vehicleDistances = {};
 
             data.forEach(record => {
-                // Count records per player
+                
                 playerRecords[record.player_name] = (playerRecords[record.player_name] || 0) + 1;
 
-                // Sum distances per vehicle
+                
                 vehicleDistances[record.vehicle_name] = (vehicleDistances[record.vehicle_name] || 0) + record.distance;
             });
 
-            // Find the best player and best vehicle
+            
             const bestPlayer = Object.keys(playerRecords).reduce((a, b) => playerRecords[a] > playerRecords[b] ? a : b);
             const bestVehicle = Object.keys(vehicleDistances).reduce((a, b) => vehicleDistances[a] > vehicleDistances[b] ? a : b);
 
@@ -91,17 +91,17 @@
             `;
         }
 
-        // Function to display the fetched data
+        
         function displayData(data, dataType) {
             const container = document.getElementById('data-container');
-            container.innerHTML = ''; // Clear the container
+            container.innerHTML = ''; 
 
-            // Add search and filter options for records if not already added
+            
             if (dataType === 'records' && !document.getElementById('filter-container')) {
                 addSearchAndFilter();
             }
 
-            container.innerHTML += '<h2>' + dataType.toUpperCase() + '</h2>'; // Add a heading
+            container.innerHTML += '<h2>' + dataType.toUpperCase() + '</h2>'; 
 
             if (data.length === 0) {
                 container.innerHTML += '<p>No data available.</p>';
@@ -140,7 +140,7 @@
             container.innerHTML += tableHTML;
         }
 
-        // Function to add search and filter options
+        
         function addSearchAndFilter() {
             const container = document.getElementById('data-container');
             const searchHTML = `
@@ -159,7 +159,7 @@
             container.insertAdjacentHTML('beforebegin', searchHTML);
         }
 
-        // Function to filter records based on search and dropdown filters
+        
         function filterRecords() {
             const searchQuery = document.getElementById('search-bar').value.toLowerCase();
             const mapFilter = document.getElementById('map-filter').value;
@@ -178,14 +178,14 @@
             displayData(filteredData, currentDataType);
         }
 
-        // Fetch summary on page load
+        
         window.onload = () => {
             fetchSummary();
             populateFormOptions();
             populateDeleteOptions();
         };
 
-        // Fetch maps, vehicles, and players for the form
+        
         function populateFormOptions() {
             fetch('load_data.php?type=maps')
                 .then(response => response.json())
@@ -224,7 +224,7 @@
                 });
         }
 
-        // Submit a new record
+        
         function submitRecord(event) {
             event.preventDefault();
 
@@ -272,7 +272,7 @@
             });
         }
 
-        // Fetch records for the delete form
+        
         function populateDeleteOptions() {
             fetch('load_data.php?type=records')
                 .then(response => response.json())
@@ -288,7 +288,7 @@
                 });
         }
 
-        // Delete a record
+        
         function deleteRecord(event) {
             event.preventDefault();
 
@@ -310,7 +310,7 @@
                 if (data.success) {
                     document.getElementById('delete-message').textContent = 'Record deleted successfully!';
                     document.getElementById('delete-message').style.color = 'green';
-                    populateDeleteOptions(); // Refresh the delete options
+                    populateDeleteOptions(); 
                 } else {
                     document.getElementById('delete-message').textContent = 'Error: ' + data.error;
                     document.getElementById('delete-message').style.color = 'red';
@@ -437,7 +437,7 @@
         background-color: #0056b3;
       }
       #data-container {
-        display: none; /* Initially hide the data container */
+        display: none; 
       }
     </style>
 </head>
