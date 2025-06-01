@@ -261,6 +261,9 @@
                     document.getElementById('form-message').textContent = 'Record submitted successfully!';
                     document.getElementById('form-message').style.color = 'green';
                     document.getElementById('record-form').reset();
+
+                    // Refresh the delete record dropdown
+                    populateDeleteOptions();
                 } else {
                     document.getElementById('form-message').textContent = 'Error: ' + data.error;
                     document.getElementById('form-message').style.color = 'red';
