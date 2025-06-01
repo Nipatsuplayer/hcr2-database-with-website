@@ -21,8 +21,8 @@ git clone https://github.com/Nipatsuplayer/hcr2-database-with-website.git
 sudo apt update
 sudo apt install php sqlite3
 ```
-### 3. Run website:
-```bash
+3. Run project:
+```
 cd pathtowebsitefolderhere (for example /home/cr2-adventure-database/)
 php -S localhost:8000
 ```
