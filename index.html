@@ -7,9 +7,139 @@
         let currentDataType = ''; 
 
         
+        function fetchStats() {
+            const statsContainer = document.getElementById('stats-container');
+            const dataContainer = document.getElementById('data-container');
+            const filterContainer = document.getElementById('filter-container');
+
+            if (currentDataType === 'stats' && statsContainer.style.display === 'block') {
+                statsContainer.style.display = 'none';
+                currentDataType = '';
+                return;
+            }
+
+            currentDataType = 'stats';
+            dataContainer.style.display = 'none';
+            if (filterContainer) filterContainer.style.display = 'none';
+            statsContainer.style.display = 'block';
+
+            fetch('load_data.php?type=records')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                        statsContainer.innerHTML = '<p style="color:red;">' + data.error + '</p>';
+                    } else {
+                        displayStats(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    statsContainer.innerHTML = '<p style="color:red;">Error fetching stats data from server.</p>';
+                });
+        }
+
+        function displayStats(data) {
+            const statsContainer = document.getElementById('stats-container');
+            statsContainer.innerHTML = '<h2>Detailed Statistics</h2>';
+
+            // Vehicle Rankings
+            const vehicleStats = {};
+            data.forEach(record => {
+                if (!vehicleStats[record.vehicle_name]) {
+                    vehicleStats[record.vehicle_name] = 0;
+                }
+                vehicleStats[record.vehicle_name] += record.distance;
+            });
+
+            const sortedVehicles = Object.entries(vehicleStats)
+                .sort((a, b) => b[1] - a[1]);
+
+            let vehicleHTML = '<div class="stats-section"><h3>Vehicle Rankings by Total Distance</h3><table>';
+            vehicleHTML += '<tr><th>Rank</th><th>Vehicle Name</th><th>Total Distance</th></tr>';
+            sortedVehicles.forEach((vehicle, index) => {
+                vehicleHTML += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1]}</td></tr>`;
+            });
+            vehicleHTML += '</table></div>';
+            statsContainer.innerHTML += vehicleHTML;
+
+            // Top 10 Players by Record Count
+            const playerRecords = {};
+            data.forEach(record => {
+                playerRecords[record.player_name] = (playerRecords[record.player_name] || 0) + 1;
+            });
+
+            const sortedPlayers = Object.entries(playerRecords)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            let playersHTML = '<div class="stats-section"><h3>Top 10 Players by Record Count</h3>';
+            playersHTML += '<div class="chart-container">';
+            
+            const maxRecords = Math.max(...sortedPlayers.map(p => p[1]));
+            sortedPlayers.forEach((player, index) => {
+                const barWidth = (player[1] / maxRecords) * 100;
+                playersHTML += `
+                    <div class="chart-bar">
+                        <span class="player-rank">${index + 1}.</span>
+                        <span class="player-name">${player[0]}</span>
+                        <div class="bar" style="width: ${barWidth}%;">
+                            <span class="bar-value">${player[1]}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            playersHTML += '</div></div>';
+            statsContainer.innerHTML += playersHTML;
+
+            // Map Statistics
+            const mapStats = {};
+            const mapRecordCount = {};
+            data.forEach(record => {
+                if (!mapStats[record.map_name]) {
+                    mapStats[record.map_name] = { distance: 0, count: 0 };
+                }
+                mapStats[record.map_name].distance += record.distance;
+                mapStats[record.map_name].count += 1;
+            });
+
+            const sortedMaps = Object.entries(mapStats)
+                .sort((a, b) => b[1].distance - a[1].distance);
+
+            let mapHTML = '<div class="stats-section"><h3>Map Statistics</h3><table>';
+            mapHTML += '<tr><th>Map Name</th><th>Total Records</th><th>Total Distance</th><th>Average Distance</th></tr>';
+            sortedMaps.forEach(map => {
+                const avgDistance = (map[1].distance / map[1].count).toFixed(2);
+                mapHTML += `<tr><td>${map[0]}</td><td>${map[1].count}</td><td>${map[1].distance}</td><td>${avgDistance}</td></tr>`;
+            });
+            mapHTML += '</table></div>';
+            statsContainer.innerHTML += mapHTML;
+
+            // Overall Statistics
+            const totalRecords = data.length;
+            const totalDistance = data.reduce((sum, record) => sum + record.distance, 0);
+            const avgDistance = (totalDistance / totalRecords).toFixed(2);
+            const uniquePlayers = new Set(data.map(r => r.player_name)).size;
+            const uniqueVehicles = new Set(data.map(r => r.vehicle_name)).size;
+            const uniqueMaps = new Set(data.map(r => r.map_name)).size;
+
+            let overallHTML = '<div class="stats-section"><h3>Overall Statistics</h3><div class="overall-stats">';
+            overallHTML += `<div class="stat-box"><strong>Total Records:</strong> ${totalRecords}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Total Distance:</strong> ${totalDistance}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Average Distance:</strong> ${avgDistance}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Unique Players:</strong> ${uniquePlayers}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Unique Vehicles:</strong> ${uniqueVehicles}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Unique Maps:</strong> ${uniqueMaps}</div>`;
+            overallHTML += '</div></div>';
+            statsContainer.innerHTML += overallHTML;
+        }
+
         function fetchData(dataType) {
             const container = document.getElementById('data-container');
             const filterContainer = document.getElementById('filter-container');
+            const statsContainer = document.getElementById('stats-container');
+            statsContainer.style.display = 'none';
 
             if (currentDataType === dataType && container.style.display === 'block') {
                 
@@ -442,6 +572,78 @@
       #data-container {
         display: none; 
       }
+      #stats-container {
+        display: none;
+      }
+      .stats-section {
+        margin: 30px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        width: 90%;
+      }
+      .stats-section h3 {
+        color: #007bff;
+        margin-top: 0;
+      }
+      .chart-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .chart-bar {
+        display: grid;
+        grid-template-columns: 35px 140px 1fr;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+      }
+      .player-rank {
+        font-weight: bold;
+        text-align: right;
+      }
+      .player-name {
+        text-align: right;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .bar {
+        height: 30px;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 10px;
+        min-width: 50px;
+      }
+      .bar-value {
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+      }
+      .overall-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
+      .stat-box {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 16px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .stat-box strong {
+        display: block;
+        font-size: 14px;
+        opacity: 0.9;
+      }
     </style>
 </head>
 <body>
@@ -452,10 +654,12 @@
             <button onclick="fetchData('vehicles')">Get Vehicles</button>
             <button onclick="fetchData('players')">Get Players</button>
             <button onclick="fetchData('records')">Get Records</button>
+            <button onclick="fetchStats()">Stats</button>
         </div>
     </header>
     <main>
         <div id="summary-container"></div>
+        <div id="stats-container"></div>
         <div id="data-container"></div>
         <div id="record-form-container" class="form-container">
             <h2>Submit a New Record</h2>
