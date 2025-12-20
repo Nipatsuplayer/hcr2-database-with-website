@@ -35,7 +35,8 @@ try {
     $stmt = $db->prepare("INSERT INTO WorldRecord (idMap, idVehicle, idPlayer, distance, current) VALUES (:idMap, :idVehicle, :idPlayer, :distance, 1)");
     $stmt->execute([':idMap' => $mapId, ':idVehicle' => $vehicleId, ':idPlayer' => $playerId, ':distance' => $distance]);
 
-    echo json_encode(['success' => true]);
+    // Return success and the player id used for this record (new or existing)
+    echo json_encode(['success' => true, 'playerId' => $playerId]);
 } catch (PDOException $e) {
     echo json_encode(['error' => "Database error: " . $e->getMessage()]);
 }

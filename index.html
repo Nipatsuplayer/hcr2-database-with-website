@@ -5,6 +5,7 @@
     <script>
         let allData = []; 
         let currentDataType = ''; 
+        let allPlayers = []; // cached players for filtering and auto-fill
 
         
         function fetchStats() {
@@ -133,6 +134,48 @@
             overallHTML += `<div class="stat-box"><strong>Unique Maps:</strong> ${uniqueMaps}</div>`;
             overallHTML += '</div></div>';
             statsContainer.innerHTML += overallHTML;
+        }
+
+        function filterPlayers() {
+            const query = document.getElementById('player-filter').value.toLowerCase();
+            const select = document.getElementById('player-select');
+            // rebuild options from allPlayers matching query
+            select.innerHTML = '<option value="">Select an Existing Player</option>';
+            allPlayers
+                .filter(p => p.namePlayer.toLowerCase().includes(query))
+                .forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.idPlayer;
+                    option.textContent = p.namePlayer;
+                    select.appendChild(option);
+                });
+            // trigger selection handler in case an option is preselected
+            handlePlayerSelection();
+        }
+
+        function handlePlayerSelection() {
+            const select = document.getElementById('player-select');
+            const countryInput = document.getElementById('country-input');
+            const playerId = select.value;
+            const newPlayerInput = document.getElementById('new-player-input');
+
+            if (playerId) {
+                // fill country from cached players and disable editing
+                const player = allPlayers.find(p => String(p.idPlayer) === String(playerId));
+                if (player) {
+                    countryInput.value = player.country || '';
+                    countryInput.disabled = true;
+                } else {
+                    countryInput.value = '';
+                    countryInput.disabled = false;
+                }
+                // clear new player field when existing player chosen
+                newPlayerInput.value = '';
+            } else {
+                // no existing player selected -> enable country for new player
+                countryInput.value = '';
+                countryInput.disabled = false;
+            }
         }
 
         function fetchData(dataType) {
@@ -321,6 +364,7 @@
                 .then(response => response.json())
                 .then(data => {
                     const mapSelect = document.getElementById('map-select');
+                    mapSelect.innerHTML = '<option value="">Select a Map</option>';
                     data.forEach(map => {
                         const option = document.createElement('option');
                         option.value = map.idMap;
@@ -333,6 +377,7 @@
                 .then(response => response.json())
                 .then(data => {
                     const vehicleSelect = document.getElementById('vehicle-select');
+                    vehicleSelect.innerHTML = '<option value="">Select a Vehicle</option>';
                     data.forEach(vehicle => {
                         const option = document.createElement('option');
                         option.value = vehicle.idVehicle;
@@ -345,7 +390,9 @@
                 .then(response => response.json())
                 .then(data => {
                     const playerSelect = document.getElementById('player-select');
-                    data.forEach(player => {
+                    allPlayers = data || [];
+                    playerSelect.innerHTML = '<option value="">Select an Existing Player</option>';
+                    allPlayers.forEach(player => {
                         const option = document.createElement('option');
                         option.value = player.idPlayer;
                         option.textContent = player.namePlayer;
@@ -371,11 +418,24 @@
                 return;
             }
 
-            const formData = {
+            // If adding a new player, country must be provided
+            if (!playerId && newPlayerName && !country) {
+                document.getElementById('form-message').textContent = 'Please provide a country for the new player.';
+                document.getElementById('form-message').style.color = 'red';
+                return;
+            }
+
+            // If an existing player is selected, ignore newPlayerName and send only playerId
+            const formData = playerId ? {
                 mapId,
                 vehicleId,
                 distance,
-                playerId,
+                playerId
+            } : {
+                mapId,
+                vehicleId,
+                distance,
+                playerId: null,
                 newPlayerName,
                 country
             };
@@ -392,8 +452,9 @@
                     document.getElementById('form-message').style.color = 'green';
                     document.getElementById('record-form').reset();
 
-                    // Refresh the delete record dropdown
+                    // Refresh the delete record dropdown and player lists (to include newly created player)
                     populateDeleteOptions();
+                    populateFormOptions();
                 } else {
                     document.getElementById('form-message').textContent = 'Error: ' + data.error;
                     document.getElementById('form-message').style.color = 'red';
@@ -678,7 +739,8 @@
                 <input type="number" id="distance-input" placeholder="Enter distance" required>
                 <br><br>
                 <label for="player-select">Player:</label>
-                <select id="player-select">
+                <input type="text" id="player-filter" placeholder="Filter players..." oninput="filterPlayers()">
+                <select id="player-select" onchange="handlePlayerSelection()">
                     <option value="">Select an Existing Player</option>
                 </select>
                 <br><br>
@@ -686,7 +748,7 @@
                 <input type="text" id="new-player-input" placeholder="Enter new player name">
                 <br><br>
                 <label for="country-input">Country:</label>
-                <input type="text" id="country-input" placeholder="Enter country" required>
+                <input type="text" id="country-input" placeholder="Enter country">
                 <br><br>
                 <button type="submit">Submit Record</button>
             </form>
