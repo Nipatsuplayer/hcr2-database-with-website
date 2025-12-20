@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hill Climb Racing 2 Records</title>
     <script>
         let allData = []; 
@@ -42,7 +44,7 @@
 
         function displayStats(data) {
             const statsContainer = document.getElementById('stats-container');
-            statsContainer.innerHTML = '<h2>Detailed Statistics</h2>';
+            statsContainer.innerHTML = '<h2>DETAILED STATISTICS</h2>';
 
             // Vehicle Rankings
             const vehicleStats = {};
@@ -178,6 +180,19 @@
             }
         }
 
+        function newPlayerTyped() {
+            const newPlayerInput = document.getElementById('new-player-input');
+            const playerSelect = document.getElementById('player-select');
+            const countryInput = document.getElementById('country-input');
+
+            if (newPlayerInput.value && newPlayerInput.value.trim() !== '') {
+                // clear any existing selection so the form treats this as a new player
+                playerSelect.value = '';
+                // enable country input so user can type the country
+                countryInput.disabled = false;
+            }
+        }
+
         function fetchData(dataType) {
             const container = document.getElementById('data-container');
             const filterContainer = document.getElementById('filter-container');
@@ -256,7 +271,7 @@
             const bestVehicle = Object.keys(vehicleDistances).reduce((a, b) => vehicleDistances[a] > vehicleDistances[b] ? a : b);
 
             summaryContainer.innerHTML = `
-                <h2>Summary</h2>
+                <h2>Summary 📝</h2>
                 <div class="summary-box">
                     <p><strong>Best Player:</strong> ${bestPlayer} (${playerRecords[bestPlayer]} records)</p>
                     <p><strong>Best Vehicle:</strong> ${bestVehicle} (${vehicleDistances[bestVehicle]} total distance)</p>
@@ -425,12 +440,18 @@
                 return;
             }
 
-            // If an existing player is selected, ignore newPlayerName and send only playerId
-            const formData = playerId ? {
+            // include selected player's displayed name to help server-side lookup if needed
+            const selectedPlayerOption = document.getElementById('player-select').selectedOptions[0];
+            const selectedPlayerName = selectedPlayerOption ? selectedPlayerOption.textContent : '';
+
+            // If an existing player is selected (allow "0" id), send playerId and playerName; otherwise send newPlayerName and country
+            const hasPlayerId = (playerId !== null && playerId !== undefined && playerId !== '');
+            const formData = hasPlayerId ? {
                 mapId,
                 vehicleId,
                 distance,
-                playerId
+                playerId,
+                playerName: selectedPlayerName
             } : {
                 mapId,
                 vehicleId,
@@ -525,7 +546,7 @@
         color: #333;
       }
       header {
-        background-color: #007bff;
+        background: linear-gradient(90deg, #007bff, #0056b3);
         color: white;
         padding: 20px;
         text-align: center;
@@ -541,13 +562,17 @@
         padding: 10px 20px;
         font-size: 16px;
         color: #fff;
-        background-color: #0056b3;
+        background: linear-gradient(0deg, #0056b3, #003d80);
         border: none;
         border-radius: 5px;
         cursor: pointer;
       }
       .header-buttons button:hover {
-        background-color: #003d80;
+        background: linear-gradient(0deg, #003d80, #042242);
+      }
+      .logo {
+        margin-bottom: 10px;
+        size: 120px;
       }
       main {
         padding: 20px;
@@ -558,7 +583,7 @@
         margin-top: 20px;
       }
       .summary-box {
-        background-color: #ffeb3b;
+        background: linear-gradient(90deg, #ffeb3b, #f4a107);
         padding: 20px;
         margin: 20px auto;
         width: 80%;
@@ -628,7 +653,8 @@
         cursor: pointer;
       }
       .form-container button:hover {
-        background-color: #0056b3;
+        /* background-color: #0056b3; */
+        background-color: linear-gradient(90deg, #007bff, #0056b3);
       }
       #data-container {
         display: none; 
@@ -709,6 +735,7 @@
 </head>
 <body>
     <header>
+        <img src="image.png" alt="HCR2 Logo" style="height: 120px; vertical-align: middle;" id ="logo">
         <h1>Hill Climb Racing 2 Adventure Records</h1>
         <div class="header-buttons">
             <button onclick="fetchData('maps')">Get Maps</button>
@@ -723,7 +750,7 @@
         <div id="stats-container"></div>
         <div id="data-container"></div>
         <div id="record-form-container" class="form-container">
-            <h2>Submit a New Record</h2>
+            <h2>Submit a New Record ✅</h2>
             <form id="record-form" onsubmit="submitRecord(event)">
                 <label for="map-select">Map:</label>
                 <select id="map-select" required>
@@ -745,7 +772,7 @@
                 </select>
                 <br><br>
                 <label for="new-player-input">Or Add New Player:</label>
-                <input type="text" id="new-player-input" placeholder="Enter new player name">
+                <input type="text" id="new-player-input" placeholder="Enter new player name" oninput="newPlayerTyped()">
                 <br><br>
                 <label for="country-input">Country:</label>
                 <input type="text" id="country-input" placeholder="Enter country">
@@ -755,7 +782,7 @@
             <p id="form-message" style="color: green;"></p>
         </div>
         <div id="delete-form-container" class="form-container">
-            <h2>Delete a Record</h2>
+            <h2>Delete a Record ❌</h2>
             <form id="delete-form" onsubmit="deleteRecord(event)">
                 <label for="record-select">Record:</label>
                 <select id="record-select" required>
@@ -766,6 +793,8 @@
             </form>
             <p id="delete-message" style="color: green;"></p>
         </div>
+        <p style="text-align: center; margin-top: 40px; font-size: 14px; color: #777;">
+            &copy; 2025 - Hill Climb Racing 2 Adventure Records - Made by : Titanium Gaming HCR2 / Nipatsu HCR2 - All rights reserved.
     </main>
 </body>
 </html>
