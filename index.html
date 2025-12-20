@@ -96,6 +96,84 @@
             playersHTML += '</div></div>';
             statsContainer.innerHTML += playersHTML;
 
+            // Pie chart: Records grouped by country (group countries with <=5 records into "Other countries")
+            const countryCounts = {};
+            data.forEach(record => {
+                // different keys used in dataset: try player_country then country
+                const c = (record.player_country || record.country || 'Unknown') || 'Unknown';
+                countryCounts[c] = (countryCounts[c] || 0) + 1;
+            });
+
+            const grouped = {};
+            let otherCount = 0;
+            Object.entries(countryCounts).forEach(([country, count]) => {
+                if (count <= 5) {
+                    otherCount += count;
+                } else {
+                    grouped[country] = count;
+                }
+            });
+            if (otherCount > 0) grouped['Other countries'] = otherCount;
+
+            const countryEntries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
+            const countryTotal = countryEntries.reduce((s, e) => s + e[1], 0) || 1;
+
+            // build pie HTML (canvas + legend)
+            let pieHTML = '<div class="stats-section"><h3>Records by Country</h3><div class="pie-container">';
+            pieHTML += '<canvas id="country-pie" width="500" height="375" aria-label="Pie chart showing records by country"></canvas>';
+            pieHTML += '<div class="pie-legend">';
+            countryEntries.forEach((entry, idx) => {
+                pieHTML += `<div class="legend-item"><span class="legend-color" data-idx="${idx}"></span><span class="legend-label">${entry[0]} (${entry[1]})</span></div>`;
+            });
+            pieHTML += '</div></div></div>';
+            statsContainer.innerHTML += pieHTML;
+
+            // draw pie on canvas using setTimeout to ensure DOM is ready
+            setTimeout(function drawPieDelay() {
+                const canvas = document.getElementById('country-pie');
+                if (!canvas || !canvas.getContext) {
+                    console.warn('Canvas not found or no 2D context');
+                    return;
+                }
+                const ctx = canvas.getContext('2d');
+                
+                // fill white background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const radius = Math.min(canvas.width, canvas.height) / 2 - 10;
+
+                let startAngle = -0.5 * Math.PI;
+                countryEntries.forEach((entry, idx) => {
+                    const slice = entry[1] / countryTotal * Math.PI * 2;
+                    const hue = (idx * 137.508) % 360;
+                    const color = `hsl(${hue},70%,50%)`;
+                    
+                    // draw slice
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy);
+                    ctx.arc(cx, cy, radius, startAngle, startAngle + slice);
+                    ctx.closePath();
+                    ctx.fillStyle = color;
+                    ctx.fill();
+
+                    // draw slice border in white
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // set legend color blocks
+                    const legendBox = document.querySelector(`.legend-color[data-idx="${idx}"]`);
+                    if (legendBox) legendBox.style.background = color;
+
+                    startAngle += slice;
+                });
+            }, 50);
+
+            // fetch('load_data.php?type=records').then(r=>r.json()).then(d=>console.log(d.length, d[0]))
+
             // Map Statistics
             const mapStats = {};
             const mapRecordCount = {};
@@ -679,6 +757,33 @@
         flex-direction: column;
         gap: 15px;
       }
+            /* Pie chart styles */
+            .pie-container {
+                display: flex;
+                gap: 20px;
+                align-items: center;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .pie-legend {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                max-width: 300px;
+                text-align: left;
+            }
+            .legend-item {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                font-size: 14px;
+            }
+            .legend-color {
+                width: 18px;
+                height: 18px;
+                border-radius: 3px;
+                display: inline-block;
+            }
       .chart-bar {
         display: grid;
         grid-template-columns: 35px 140px 1fr;
