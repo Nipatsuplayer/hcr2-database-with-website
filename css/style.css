@@ -1,0 +1,327 @@
+
+body {
+font-family: Arial, sans-serif;
+margin: 0;
+padding: 0;
+background-color: #f4f4f9;
+color: #333;
+}
+/* Ensure header doesn't clip absolutely positioned children */
+header {
+position: relative;
+background: linear-gradient(90deg, #007bff, #0056b3);
+color: white;
+padding: 16px 20px;
+overflow: visible;
+min-height: 64px;
+}
+
+.header-inner {
+display: grid;
+grid-template-columns: auto 1fr auto;
+align-items: center;
+}
+
+.branding {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+.branding img {
+height: 40px;
+width: auto;
+}
+
+/* Centered header buttons (original place) */
+.header-buttons {
+display: flex;
+justify-self: end;
+gap: 8px;
+}
+.header-right {
+display: flex;
+align-items: center;
+gap: 10px;
+justify-self: end;
+}
+.header-buttons button {
+background: #ffffffcc;
+color: #003b70;
+border: 1px solid rgba(0,0,0,0.08);
+padding: 8px 12px;
+border-radius: 6px;
+font-weight: 600;
+cursor: pointer;
+font-size: 13px;
+display: inline-flex;
+align-items: center;
+gap: 8px;
+}
+.header-buttons button:hover { filter: brightness(0.95); }
+
+/* Discord login button styling as a regular centered button with icon + text */
+.discord-btn {
+background: #5865F2;
+color: #fff;
+border: none;
+padding: 8px 12px;
+border-radius: 8px;
+font-weight: 700;
+font-size: 13px;
+display: inline-flex;
+align-items: center;
+gap: 8px;
+}
+.discord-btn img.discord-logo {
+width: 18px;
+height: 18px;
+display: inline-block;
+}
+
+/* Admin/logout small inline buttons (JS toggles visibility) */
+#admin-btn, #logout-btn {
+background: transparent;
+color: #fff;
+border: 1px solid rgba(255,255,255,0.15);
+padding: 6px 10px;
+border-radius: 6px;
+cursor: pointer;
+font-weight: 600;
+}
+
+/* Main content styles */
+main {
+padding: 20px;
+text-align: center;
+}
+h2 {
+text-align: center;
+margin-top: 20px;
+}
+.summary-box {
+background: linear-gradient(90deg, #ffeb3b, #f4a107);
+padding: 20px;
+margin: 20px auto;
+width: 80%;
+border-radius: 10px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+font-size: 18px;
+}
+.filter-container {
+display: flex;
+justify-content: center;
+gap: 10px;
+margin: 20px 0;
+}
+#search-bar, select {
+padding: 10px;
+font-size: 16px;
+border: 1px solid #ccc;
+border-radius: 5px;
+}
+table {
+border-collapse: collapse;
+width: 90%;
+margin: 20px auto;
+background-color: #fff;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+th, td {
+border: 1px solid #ddd;
+padding: 10px;
+text-align: left;
+}
+th {
+background-color: #f2f2f2;
+}
+tr:nth-child(even) {
+background-color: #f9f9f9;
+}
+tr:hover {
+background-color: #f1f1f1;
+}
+.form-container {
+background-color: #f9f9f9;
+padding: 20px;
+margin: 20px auto;
+width: 80%;
+border-radius: 10px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.form-container h2 {
+margin-bottom: 15px;
+}
+.form-container label {
+font-weight: bold;
+}
+.form-container input, .form-container select, .form-container button {
+width: 100%;
+padding: 10px;
+margin: 10px 0;
+font-size: 16px;
+border: 1px solid #ccc;
+border-radius: 5px;
+}
+.form-container button {
+background-color: #007bff;
+color: white;
+border: none;
+cursor: pointer;
+}
+.form-container button:hover {
+/* background-color: #0056b3; */
+background-color: linear-gradient(90deg, #007bff, #0056b3);
+}
+#data-container {
+display: none; 
+}
+#stats-container {
+display: none;
+}
+.stats-section {
+margin: 30px auto;
+padding: 20px;
+background-color: #fff;
+border-radius: 10px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+width: 90%;
+}
+.stats-section h3 {
+color: #007bff;
+margin-top: 0;
+}
+.chart-container {
+display: flex;
+flex-direction: column;
+gap: 15px;
+}
+    /* Pie chart styles */
+    .pie-container {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .pie-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 300px;
+        text-align: left;
+    }
+    .legend-item {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-size: 14px;
+    }
+    .legend-color {
+        width: 18px;
+        height: 18px;
+        border-radius: 3px;
+        display: inline-block;
+    }
+.chart-bar {
+display: grid;
+grid-template-columns: 35px 140px 1fr;
+gap: 10px;
+align-items: center;
+width: 100%;
+}
+.player-rank {
+font-weight: bold;
+text-align: right;
+}
+.player-name {
+text-align: right;
+font-weight: 500;
+overflow: hidden;
+text-overflow: ellipsis;
+white-space: nowrap;
+}
+.bar {
+height: 30px;
+background: linear-gradient(90deg, #007bff, #0056b3);
+border-radius: 5px;
+display: flex;
+align-items: center;
+justify-content: flex-end;
+padding-right: 10px;
+min-width: 50px;
+}
+.bar-value {
+color: white;
+font-weight: bold;
+font-size: 14px;
+}
+.overall-stats {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 15px;
+}
+.stat-box {
+background: linear-gradient(135deg, #007bff, #0056b3);
+color: white;
+padding: 20px;
+border-radius: 8px;
+text-align: center;
+font-size: 16px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.stat-box strong {
+display: block;
+font-size: 14px;
+opacity: 0.9;
+}
+.about-section {
+background-color: #fff;
+padding: 20px;
+margin: 40px auto;
+width: 80%;
+border-radius: 10px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+#footer {
+    margin-top: 40px;
+    padding: 20px;
+    background : linear-gradient(90deg, #abc2c9, #c7d3d5);
+    font-size: 14px;
+    color: #555;
+    text-align: center;
+}
+
+/* login container placed in top-right corner of header (only login moved) */
+header { position: relative; } /* ensure absolute container is relative to header */
+.login-container {
+position: absolute;
+top: 10px;
+right: 14px;
+z-index: 20;
+}
+
+/* make the compact Discord login button and icon smaller */
+.discord-btn {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+background: #5865F2;
+color: #fff;
+border: none;
+height: 34px;         /* explicit height to avoid clipping */
+min-width: 34px;
+padding: 4px 10px;
+border-radius: 8px;
+cursor: pointer;
+font-weight: 600;
+font-size: 13px;
+line-height: 1;
+overflow: visible;
+}
+.discord-logo {
+width: 18px;
+height: 18px;
+display: inline-block;
+flex: 0 0 18px;
+}
+.discord-btn:hover { filter: brightness(0.95); }

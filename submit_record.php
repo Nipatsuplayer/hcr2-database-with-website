@@ -1,4 +1,8 @@
 <?php
+// Enforce Discord auth & permissions for creating/editing records
+require_once __DIR__ . '/auth/check_auth.php';
+ensure_authorized_json();
+
 // Database connection details
 $db_file = './main.sqlite';
 

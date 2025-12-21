@@ -1,4 +1,7 @@
 <?php
+// Enforce Discord auth & permissions for deleting records
+require_once __DIR__ . '/auth/check_auth.php';
+ensure_authorized_json();
 
 $db_file = './main.sqlite';
 
