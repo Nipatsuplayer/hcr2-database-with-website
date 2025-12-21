@@ -2,7 +2,6 @@
 require_once __DIR__ . '/auth/config.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// server-side allow check; redirect if not allowed
 $logged = isset($_SESSION['discord']) && isset($_SESSION['discord']['id']);
 $allowed = false;
 if ($logged && !empty($ALLOWED_DISCORD_IDS)) {
@@ -20,7 +19,6 @@ if (!$logged || !$allowed) {
     <title>Admin — HCR2 Records</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-      /* minimal admin page styles */
       body { font-family: Arial, sans-serif; background:#f4f4f9; color:#333; padding:20px; }
       h1 { color:#007bff; }
       .form-container { background:#fff; padding:20px; border-radius:8px; max-width:900px; margin:20px auto; box-shadow:0 2px 6px rgba(0,0,0,0.08); }

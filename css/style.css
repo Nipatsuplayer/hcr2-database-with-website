@@ -6,7 +6,6 @@ padding: 0;
 background-color: #f4f4f9;
 color: #333;
 }
-/* Ensure header doesn't clip absolutely positioned children */
 header {
 position: relative;
 background: linear-gradient(90deg, #007bff, #0056b3);
@@ -32,7 +31,6 @@ height: 40px;
 width: auto;
 }
 
-/* Centered header buttons (original place) */
 .header-buttons {
 display: flex;
 justify-self: end;
@@ -59,7 +57,6 @@ gap: 8px;
 }
 .header-buttons button:hover { filter: brightness(0.95); }
 
-/* Discord login button styling as a regular centered button with icon + text */
 .discord-btn {
 background: #5865F2;
 color: #fff;
@@ -78,7 +75,7 @@ height: 18px;
 display: inline-block;
 }
 
-/* Admin/logout small inline buttons (JS toggles visibility) */
+
 #admin-btn, #logout-btn {
 background: transparent;
 color: #fff;
@@ -89,7 +86,6 @@ cursor: pointer;
 font-weight: 600;
 }
 
-/* Main content styles */
 main {
 padding: 20px;
 text-align: center;
@@ -169,7 +165,6 @@ border: none;
 cursor: pointer;
 }
 .form-container button:hover {
-/* background-color: #0056b3; */
 background-color: linear-gradient(90deg, #007bff, #0056b3);
 }
 #data-container {
@@ -195,7 +190,6 @@ display: flex;
 flex-direction: column;
 gap: 15px;
 }
-    /* Pie chart styles */
     .pie-container {
         display: flex;
         gap: 20px;
@@ -291,8 +285,7 @@ box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
-/* login container placed in top-right corner of header (only login moved) */
-header { position: relative; } /* ensure absolute container is relative to header */
+header { position: relative; } 
 .login-container {
 position: absolute;
 top: 10px;
@@ -300,7 +293,6 @@ right: 14px;
 z-index: 20;
 }
 
-/* make the compact Discord login button and icon smaller */
 .discord-btn {
 display: inline-flex;
 align-items: center;
@@ -308,7 +300,7 @@ justify-content: center;
 background: #5865F2;
 color: #fff;
 border: none;
-height: 34px;         /* explicit height to avoid clipping */
+height: 34px;
 min-width: 34px;
 padding: 4px 10px;
 border-radius: 8px;

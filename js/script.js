@@ -1,7 +1,6 @@
-
 let allData = []; 
 let currentDataType = ''; 
-let allPlayers = []; // cached players for filtering and auto-fill
+let allPlayers = []; 
 
 
 function fetchStats() {
@@ -40,7 +39,6 @@ function displayStats(data) {
 const statsContainer = document.getElementById('stats-container');
 statsContainer.innerHTML = '<h2>DETAILED STATISTICS</h2>';
 
-// Vehicle Rankings
 const vehicleStats = {};
 data.forEach(record => {
     if (!vehicleStats[record.vehicle_name]) {
@@ -60,7 +58,6 @@ sortedVehicles.forEach((vehicle, index) => {
 vehicleHTML += '</table></div>';
 statsContainer.innerHTML += vehicleHTML;
 
-// Top 10 Players by Record Count
 const playerRecords = {};
 data.forEach(record => {
     playerRecords[record.player_name] = (playerRecords[record.player_name] || 0) + 1;
@@ -90,10 +87,8 @@ sortedPlayers.forEach((player, index) => {
 playersHTML += '</div></div>';
 statsContainer.innerHTML += playersHTML;
 
-// Pie chart: Records grouped by country (group countries with <=5 records into "Other countries")
 const countryCounts = {};
 data.forEach(record => {
-    // different keys used in dataset: try player_country then country
     const c = (record.player_country || record.country || 'Unknown') || 'Unknown';
     countryCounts[c] = (countryCounts[c] || 0) + 1;
 });
@@ -112,7 +107,6 @@ if (otherCount > 0) grouped['Other countries'] = otherCount;
 const countryEntries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
 const countryTotal = countryEntries.reduce((s, e) => s + e[1], 0) || 1;
 
-// build pie HTML (canvas + legend)
 let pieHTML = '<div class="stats-section"><h3>Records by Country</h3><div class="pie-container">';
 pieHTML += '<canvas id="country-pie" width="500" height="375" aria-label="Pie chart showing records by country"></canvas>';
 pieHTML += '<div class="pie-legend">';
@@ -122,7 +116,6 @@ countryEntries.forEach((entry, idx) => {
 pieHTML += '</div></div></div>';
 statsContainer.innerHTML += pieHTML;
 
-// draw pie on canvas using setTimeout to ensure DOM is ready
 setTimeout(function drawPieDelay() {
     const canvas = document.getElementById('country-pie');
     if (!canvas || !canvas.getContext) {
@@ -131,7 +124,6 @@ setTimeout(function drawPieDelay() {
     }
     const ctx = canvas.getContext('2d');
     
-    // fill white background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
@@ -145,7 +137,6 @@ setTimeout(function drawPieDelay() {
         const hue = (idx * 137.508) % 360;
         const color = `hsl(${hue},70%,50%)`;
         
-        // draw slice
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.arc(cx, cy, radius, startAngle, startAngle + slice);
@@ -153,12 +144,10 @@ setTimeout(function drawPieDelay() {
         ctx.fillStyle = color;
         ctx.fill();
 
-        // draw slice border in white
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // set legend color blocks
         const legendBox = document.querySelector(`.legend-color[data-idx="${idx}"]`);
         if (legendBox) legendBox.style.background = color;
 
@@ -166,9 +155,6 @@ setTimeout(function drawPieDelay() {
     });
 }, 50);
 
-// fetch('load_data.php?type=records').then(r=>r.json()).then(d=>console.log(d.length, d[0]))
-
-// Map Statistics
 const mapStats = {};
 const mapRecordCount = {};
 data.forEach(record => {
@@ -191,7 +177,6 @@ sortedMaps.forEach(map => {
 mapHTML += '</table></div>';
 statsContainer.innerHTML += mapHTML;
 
-// Overall Statistics
 const totalRecords = data.length;
 const totalDistance = data.reduce((sum, record) => sum + record.distance, 0);
 const avgDistance = (totalDistance / totalRecords).toFixed(2);
@@ -213,7 +198,6 @@ statsContainer.innerHTML += overallHTML;
 function filterPlayers() {
 const query = document.getElementById('player-filter').value.toLowerCase();
 const select = document.getElementById('player-select');
-// rebuild options from allPlayers matching query
 select.innerHTML = '<option value="">Select an Existing Player</option>';
 allPlayers
     .filter(p => p.namePlayer.toLowerCase().includes(query))
@@ -223,7 +207,6 @@ allPlayers
         option.textContent = p.namePlayer;
         select.appendChild(option);
     });
-// trigger selection handler in case an option is preselected
 handlePlayerSelection();
 }
 
@@ -234,7 +217,6 @@ const playerId = select.value;
 const newPlayerInput = document.getElementById('new-player-input');
 
 if (playerId) {
-    // fill country from cached players and disable editing
     const player = allPlayers.find(p => String(p.idPlayer) === String(playerId));
     if (player) {
         countryInput.value = player.country || '';
@@ -243,10 +225,8 @@ if (playerId) {
         countryInput.value = '';
         countryInput.disabled = false;
     }
-    // clear new player field when existing player chosen
     newPlayerInput.value = '';
 } else {
-    // no existing player selected -> enable country for new player
     countryInput.value = '';
     countryInput.disabled = false;
 }
@@ -258,9 +238,7 @@ const playerSelect = document.getElementById('player-select');
 const countryInput = document.getElementById('country-input');
 
 if (newPlayerInput.value && newPlayerInput.value.trim() !== '') {
-    // clear any existing selection so the form treats this as a new player
     playerSelect.value = '';
-    // enable country input so user can type the country
     countryInput.disabled = false;
 }
 }
@@ -272,7 +250,6 @@ const statsContainer = document.getElementById('stats-container');
 statsContainer.style.display = 'none';
 
 if (currentDataType === dataType && container.style.display === 'block') {
-    
     container.style.display = 'none';
     if (filterContainer) filterContainer.style.display = 'none'; 
     currentDataType = ''; 
@@ -281,7 +258,6 @@ if (currentDataType === dataType && container.style.display === 'block') {
 
 currentDataType = dataType; 
 container.style.display = 'block'; 
-
 
 if (dataType === 'records') {
     if (filterContainer) filterContainer.style.display = 'flex'; 
@@ -306,7 +282,6 @@ fetch('load_data.php?type=' + dataType)
     });
 }
 
-
 function fetchSummary() {
 fetch('load_data.php?type=records')
     .then(response => response.json())
@@ -323,7 +298,6 @@ fetch('load_data.php?type=records')
         document.getElementById('summary-container').innerHTML = '<p style="color:red;">Error fetching summary data from server.</p>';
     });
 }
-
 
 function displaySummary(data) {
 const summaryContainer = document.getElementById('summary-container');
@@ -385,7 +359,6 @@ if (dataType === 'maps') {
         tableHTML += `<tr><td>${item.idPlayer}</td><td>${item.namePlayer}</td><td>${item.country}</td></tr>`;
     });
 } else if (dataType === 'records') {
-    // Sorting: use selected sort option if available
     const sortSelect = document.getElementById('sort-select');
     const sortVal = sortSelect ? sortSelect.value : 'default';
 
@@ -495,7 +468,6 @@ try {
         if (logoutBtn) logoutBtn.style.display = 'none';
     }
 
-    // Show Admin button only to allowed users
     if (status.logged && status.allowed) {
         if (adminBtn) {
             adminBtn.style.display = 'inline-block';
@@ -515,13 +487,11 @@ try {
 }
 }
 
-// Replace window.onload to use checkAuthAndInit
 window.onload = () => {
 fetchSummary();
 checkAuthAndInit();
 };
 
-// Update fetch calls that modify data to send credentials
 function submitRecord(event) {
 event.preventDefault();
 
@@ -538,18 +508,15 @@ if (!playerId && !newPlayerName) {
     return;
 }
 
-// If adding a new player, country must be provided
 if (!playerId && newPlayerName && !country) {
     document.getElementById('form-message').textContent = 'Please provide a country for the new player.';
     document.getElementById('form-message').style.color = 'red';
     return;
 }
 
-// include selected player's displayed name to help server-side lookup if needed
 const selectedPlayerOption = document.getElementById('player-select').selectedOptions[0];
 const selectedPlayerName = selectedPlayerOption ? selectedPlayerOption.textContent : '';
 
-// If an existing player is selected (allow "0" id), send playerId and playerName; otherwise send newPlayerName and country
 const hasPlayerId = (playerId !== null && playerId !== undefined && playerId !== '');
 const formData = hasPlayerId ? {
     mapId,
@@ -585,7 +552,6 @@ fetch('submit_record.php', {
         document.getElementById('form-message').style.color = 'green';
         document.getElementById('record-form').reset();
 
-        // Refresh the delete record dropdown and player lists (to include newly created player)
         populateDeleteOptions();
         populateFormOptions();
     } else {
@@ -604,16 +570,15 @@ fetch('load_data.php?type=records')
     .then(response => response.json())
     .then(data => {
         const recordSelect = document.getElementById('record-select');
-        recordSelect.innerHTML = '<option value="">Select a Record</option>'; // Clear existing options
+        recordSelect.innerHTML = '<option value="">Select a Record</option>';
         (data || []).forEach(record => {
             const option = document.createElement('option');
-            option.value = record.idRecord; // Assuming `idRecord` is the unique identifier for records
+            option.value = record.idRecord;
             option.textContent = `${record.distance} - ${record.map_name} - ${record.vehicle_name} - ${record.player_name}`;
             recordSelect.appendChild(option);
         });
     });
 }
-
 
 function deleteRecord(event) {
 event.preventDefault();
