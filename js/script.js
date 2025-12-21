@@ -58,6 +58,52 @@ sortedVehicles.forEach((vehicle, index) => {
 vehicleHTML += '</table></div>';
 statsContainer.innerHTML += vehicleHTML;
 
+
+// Vehicle Rankings by Adventure Stars
+const specialMaps = ['Forest Trials', 'Intense City', 'Raging Winter'];
+const vehicleStars = {};
+data.forEach(record => {
+    if (!vehicleStars[record.vehicle_name]) {
+        vehicleStars[record.vehicle_name] = 0;
+    }
+    
+    const isSpecialMap = specialMaps.includes(record.map_name);
+    let stars = 0;
+    
+    if (isSpecialMap) {
+        // Maps spéciales: >= 5000 = 15000 étoiles, sinon distance * 3
+        stars = record.distance >= 5000 ? 15000 : record.distance * 3;
+    } else {
+        // Maps normales: >= 10000 = 10000 étoiles, sinon distance
+        stars = record.distance >= 10000 ? 10000 : record.distance;
+    }
+    
+    vehicleStars[record.vehicle_name] += stars;
+});
+
+const sortedVehiclesByStars = Object.entries(vehicleStars)
+    .sort((a, b) => b[1] - a[1]);
+
+let starsHTML = '<div class="stats-section"><h3>Vehicle Rankings by Adventure Stars</h3>';
+starsHTML += '<div class="chart-container">';
+
+const maxStars = Math.max(...sortedVehiclesByStars.map(v => v[1]));
+sortedVehiclesByStars.forEach((vehicle, index) => {
+    const barWidth = (vehicle[1] / maxStars) * 100;
+    starsHTML += `
+        <div class="chart-bar">
+            <span class="player-rank">${index + 1}.</span>
+            <span class="player-name">${vehicle[0]}</span>
+            <div class="bar" style="width: ${barWidth}%; background : linear-gradient(to right, #85a728ff, #28a745);">
+                <span class="bar-value">${vehicle[1].toLocaleString()}</span>
+            </div>
+        </div>
+    `;
+});
+
+starsHTML += '</div></div>';
+statsContainer.innerHTML += starsHTML;
+
 const playerRecords = {};
 data.forEach(record => {
     playerRecords[record.player_name] = (playerRecords[record.player_name] || 0) + 1;
