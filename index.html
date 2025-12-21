@@ -391,8 +391,42 @@
                     tableHTML += `<tr><td>${item.idPlayer}</td><td>${item.namePlayer}</td><td>${item.country}</td></tr>`;
                 });
             } else if (dataType === 'records') {
+                // Sorting: use selected sort option if available
+                const sortSelect = document.getElementById('sort-select');
+                const sortVal = sortSelect ? sortSelect.value : 'default';
+
+                const records = Array.isArray(data) ? [...data] : [];
+
+                const getMapId = r => {
+                    const v = r.idMap ?? r.mapId ?? r.map_id ?? null;
+                    return (v !== null && !isNaN(Number(v))) ? Number(v) : null;
+                };
+                const getVehicleId = r => {
+                    const v = r.idVehicle ?? r.vehicleId ?? r.vehicle_id ?? null;
+                    return (v !== null && !isNaN(Number(v))) ? Number(v) : null;
+                };
+
+                if (sortVal === 'dist-asc') {
+                    records.sort((a, b) => Number(a.distance) - Number(b.distance));
+                } else if (sortVal === 'dist-desc') {
+                    records.sort((a, b) => Number(b.distance) - Number(a.distance));
+                } else {
+                    records.sort((a, b) => {
+                        const ai = getMapId(a), bi = getMapId(b);
+                        if (ai !== null && bi !== null && ai !== bi) return ai - bi;
+
+                        const mapComp = String(a.map_name || a.nameMap || '').localeCompare(String(b.map_name || b.nameMap || ''));
+                        if (mapComp !== 0) return mapComp;
+
+                        const av = getVehicleId(a), bv = getVehicleId(b);
+                        if (av !== null && bv !== null && av !== bv) return av - bv;
+
+                        return String(a.vehicle_name || a.nameVehicle || '').localeCompare(String(b.vehicle_name || b.nameVehicle || ''));
+                    });
+                }
+
                 tableHTML += '<tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr>';
-                data.forEach(item => {
+                records.forEach(item => {
                     tableHTML += `<tr>
                                     <td>${item.distance}</td>
                                     <td>${item.map_name}</td>
@@ -415,6 +449,11 @@
                     <select id="map-filter" onchange="filterRecords()">
                         <option value="">Filter by Map</option>
                         ${[...new Set(allData.map(record => record.map_name))].map(map => `<option value="${map}">${map}</option>`).join('')}
+                    </select>
+                    <select id="sort-select" onchange="filterRecords()" title="Sort records">
+                        <option value="default">Default: Map / Vehicle Alphabetically</option>
+                        <option value="dist-asc">Distance ↑ (ascending)</option>
+                        <option value="dist-desc">Distance ↓ (descending)</option>
                     </select>
                     <select id="vehicle-filter" onchange="filterRecords()">
                         <option value="">Filter by Vehicle</option>
