@@ -1,15 +1,281 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hill Climb Racing 2 Records</title>
     <script>
         let allData = []; 
         let currentDataType = ''; 
+        let allPlayers = []; // cached players for filtering and auto-fill
 
         
+        function fetchStats() {
+            const statsContainer = document.getElementById('stats-container');
+            const dataContainer = document.getElementById('data-container');
+            const filterContainer = document.getElementById('filter-container');
+
+            if (currentDataType === 'stats' && statsContainer.style.display === 'block') {
+                statsContainer.style.display = 'none';
+                currentDataType = '';
+                return;
+            }
+
+            currentDataType = 'stats';
+            dataContainer.style.display = 'none';
+            if (filterContainer) filterContainer.style.display = 'none';
+            statsContainer.style.display = 'block';
+
+            fetch('load_data.php?type=records')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('Error:', data.error);
+                        statsContainer.innerHTML = '<p style="color:red;">' + data.error + '</p>';
+                    } else {
+                        displayStats(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    statsContainer.innerHTML = '<p style="color:red;">Error fetching stats data from server.</p>';
+                });
+        }
+
+        function displayStats(data) {
+            const statsContainer = document.getElementById('stats-container');
+            statsContainer.innerHTML = '<h2>DETAILED STATISTICS</h2>';
+
+            // Vehicle Rankings
+            const vehicleStats = {};
+            data.forEach(record => {
+                if (!vehicleStats[record.vehicle_name]) {
+                    vehicleStats[record.vehicle_name] = 0;
+                }
+                vehicleStats[record.vehicle_name] += record.distance;
+            });
+
+            const sortedVehicles = Object.entries(vehicleStats)
+                .sort((a, b) => b[1] - a[1]);
+
+            let vehicleHTML = '<div class="stats-section"><h3>Vehicle Rankings by Total Distance</h3><table>';
+            vehicleHTML += '<tr><th>Rank</th><th>Vehicle Name</th><th>Total Distance</th></tr>';
+            sortedVehicles.forEach((vehicle, index) => {
+                vehicleHTML += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1]}</td></tr>`;
+            });
+            vehicleHTML += '</table></div>';
+            statsContainer.innerHTML += vehicleHTML;
+
+            // Top 10 Players by Record Count
+            const playerRecords = {};
+            data.forEach(record => {
+                playerRecords[record.player_name] = (playerRecords[record.player_name] || 0) + 1;
+            });
+
+            const sortedPlayers = Object.entries(playerRecords)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            let playersHTML = '<div class="stats-section"><h3>Top 10 Players by Record Count</h3>';
+            playersHTML += '<div class="chart-container">';
+            
+            const maxRecords = Math.max(...sortedPlayers.map(p => p[1]));
+            sortedPlayers.forEach((player, index) => {
+                const barWidth = (player[1] / maxRecords) * 100;
+                playersHTML += `
+                    <div class="chart-bar">
+                        <span class="player-rank">${index + 1}.</span>
+                        <span class="player-name">${player[0]}</span>
+                        <div class="bar" style="width: ${barWidth}%;">
+                            <span class="bar-value">${player[1]}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            playersHTML += '</div></div>';
+            statsContainer.innerHTML += playersHTML;
+
+            // Pie chart: Records grouped by country (group countries with <=5 records into "Other countries")
+            const countryCounts = {};
+            data.forEach(record => {
+                // different keys used in dataset: try player_country then country
+                const c = (record.player_country || record.country || 'Unknown') || 'Unknown';
+                countryCounts[c] = (countryCounts[c] || 0) + 1;
+            });
+
+            const grouped = {};
+            let otherCount = 0;
+            Object.entries(countryCounts).forEach(([country, count]) => {
+                if (count <= 5) {
+                    otherCount += count;
+                } else {
+                    grouped[country] = count;
+                }
+            });
+            if (otherCount > 0) grouped['Other countries'] = otherCount;
+
+            const countryEntries = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
+            const countryTotal = countryEntries.reduce((s, e) => s + e[1], 0) || 1;
+
+            // build pie HTML (canvas + legend)
+            let pieHTML = '<div class="stats-section"><h3>Records by Country</h3><div class="pie-container">';
+            pieHTML += '<canvas id="country-pie" width="500" height="375" aria-label="Pie chart showing records by country"></canvas>';
+            pieHTML += '<div class="pie-legend">';
+            countryEntries.forEach((entry, idx) => {
+                pieHTML += `<div class="legend-item"><span class="legend-color" data-idx="${idx}"></span><span class="legend-label">${entry[0]} (${entry[1]})</span></div>`;
+            });
+            pieHTML += '</div></div></div>';
+            statsContainer.innerHTML += pieHTML;
+
+            // draw pie on canvas using setTimeout to ensure DOM is ready
+            setTimeout(function drawPieDelay() {
+                const canvas = document.getElementById('country-pie');
+                if (!canvas || !canvas.getContext) {
+                    console.warn('Canvas not found or no 2D context');
+                    return;
+                }
+                const ctx = canvas.getContext('2d');
+                
+                // fill white background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const cx = canvas.width / 2;
+                const cy = canvas.height / 2;
+                const radius = Math.min(canvas.width, canvas.height) / 2 - 10;
+
+                let startAngle = -0.5 * Math.PI;
+                countryEntries.forEach((entry, idx) => {
+                    const slice = entry[1] / countryTotal * Math.PI * 2;
+                    const hue = (idx * 137.508) % 360;
+                    const color = `hsl(${hue},70%,50%)`;
+                    
+                    // draw slice
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy);
+                    ctx.arc(cx, cy, radius, startAngle, startAngle + slice);
+                    ctx.closePath();
+                    ctx.fillStyle = color;
+                    ctx.fill();
+
+                    // draw slice border in white
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // set legend color blocks
+                    const legendBox = document.querySelector(`.legend-color[data-idx="${idx}"]`);
+                    if (legendBox) legendBox.style.background = color;
+
+                    startAngle += slice;
+                });
+            }, 50);
+
+            // fetch('load_data.php?type=records').then(r=>r.json()).then(d=>console.log(d.length, d[0]))
+
+            // Map Statistics
+            const mapStats = {};
+            const mapRecordCount = {};
+            data.forEach(record => {
+                if (!mapStats[record.map_name]) {
+                    mapStats[record.map_name] = { distance: 0, count: 0 };
+                }
+                mapStats[record.map_name].distance += record.distance;
+                mapStats[record.map_name].count += 1;
+            });
+
+            const sortedMaps = Object.entries(mapStats)
+                .sort((a, b) => b[1].distance - a[1].distance);
+
+            let mapHTML = '<div class="stats-section"><h3>Map Statistics</h3><table>';
+            mapHTML += '<tr><th>Map Name</th><th>Total Records</th><th>Total Distance</th><th>Average Distance</th></tr>';
+            sortedMaps.forEach(map => {
+                const avgDistance = (map[1].distance / map[1].count).toFixed(2);
+                mapHTML += `<tr><td>${map[0]}</td><td>${map[1].count}</td><td>${map[1].distance}</td><td>${avgDistance}</td></tr>`;
+            });
+            mapHTML += '</table></div>';
+            statsContainer.innerHTML += mapHTML;
+
+            // Overall Statistics
+            const totalRecords = data.length;
+            const totalDistance = data.reduce((sum, record) => sum + record.distance, 0);
+            const avgDistance = (totalDistance / totalRecords).toFixed(2);
+            const uniquePlayers = new Set(data.map(r => r.player_name)).size;
+            const uniqueVehicles = new Set(data.map(r => r.vehicle_name)).size;
+            const uniqueMaps = new Set(data.map(r => r.map_name)).size;
+
+            let overallHTML = '<div class="stats-section"><h3>Overall Statistics</h3><div class="overall-stats">';
+            overallHTML += `<div class="stat-box"><strong>Total Records:</strong> ${totalRecords}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Total Distance:</strong> ${totalDistance}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Average Distance:</strong> ${avgDistance}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Unique Players:</strong> ${uniquePlayers}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Unique Vehicles:</strong> ${uniqueVehicles}</div>`;
+            overallHTML += `<div class="stat-box"><strong>Unique Maps:</strong> ${uniqueMaps}</div>`;
+            overallHTML += '</div></div>';
+            statsContainer.innerHTML += overallHTML;
+        }
+
+        function filterPlayers() {
+            const query = document.getElementById('player-filter').value.toLowerCase();
+            const select = document.getElementById('player-select');
+            // rebuild options from allPlayers matching query
+            select.innerHTML = '<option value="">Select an Existing Player</option>';
+            allPlayers
+                .filter(p => p.namePlayer.toLowerCase().includes(query))
+                .forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.idPlayer;
+                    option.textContent = p.namePlayer;
+                    select.appendChild(option);
+                });
+            // trigger selection handler in case an option is preselected
+            handlePlayerSelection();
+        }
+
+        function handlePlayerSelection() {
+            const select = document.getElementById('player-select');
+            const countryInput = document.getElementById('country-input');
+            const playerId = select.value;
+            const newPlayerInput = document.getElementById('new-player-input');
+
+            if (playerId) {
+                // fill country from cached players and disable editing
+                const player = allPlayers.find(p => String(p.idPlayer) === String(playerId));
+                if (player) {
+                    countryInput.value = player.country || '';
+                    countryInput.disabled = true;
+                } else {
+                    countryInput.value = '';
+                    countryInput.disabled = false;
+                }
+                // clear new player field when existing player chosen
+                newPlayerInput.value = '';
+            } else {
+                // no existing player selected -> enable country for new player
+                countryInput.value = '';
+                countryInput.disabled = false;
+            }
+        }
+
+        function newPlayerTyped() {
+            const newPlayerInput = document.getElementById('new-player-input');
+            const playerSelect = document.getElementById('player-select');
+            const countryInput = document.getElementById('country-input');
+
+            if (newPlayerInput.value && newPlayerInput.value.trim() !== '') {
+                // clear any existing selection so the form treats this as a new player
+                playerSelect.value = '';
+                // enable country input so user can type the country
+                countryInput.disabled = false;
+            }
+        }
+
         function fetchData(dataType) {
             const container = document.getElementById('data-container');
             const filterContainer = document.getElementById('filter-container');
+            const statsContainer = document.getElementById('stats-container');
+            statsContainer.style.display = 'none';
 
             if (currentDataType === dataType && container.style.display === 'block') {
                 
@@ -83,7 +349,7 @@
             const bestVehicle = Object.keys(vehicleDistances).reduce((a, b) => vehicleDistances[a] > vehicleDistances[b] ? a : b);
 
             summaryContainer.innerHTML = `
-                <h2>Summary</h2>
+                <h2>Summary 📝</h2>
                 <div class="summary-box">
                     <p><strong>Best Player:</strong> ${bestPlayer} (${playerRecords[bestPlayer]} records)</p>
                     <p><strong>Best Vehicle:</strong> ${bestVehicle} (${vehicleDistances[bestVehicle]} total distance)</p>
@@ -125,8 +391,42 @@
                     tableHTML += `<tr><td>${item.idPlayer}</td><td>${item.namePlayer}</td><td>${item.country}</td></tr>`;
                 });
             } else if (dataType === 'records') {
+                // Sorting: use selected sort option if available
+                const sortSelect = document.getElementById('sort-select');
+                const sortVal = sortSelect ? sortSelect.value : 'default';
+
+                const records = Array.isArray(data) ? [...data] : [];
+
+                const getMapId = r => {
+                    const v = r.idMap ?? r.mapId ?? r.map_id ?? null;
+                    return (v !== null && !isNaN(Number(v))) ? Number(v) : null;
+                };
+                const getVehicleId = r => {
+                    const v = r.idVehicle ?? r.vehicleId ?? r.vehicle_id ?? null;
+                    return (v !== null && !isNaN(Number(v))) ? Number(v) : null;
+                };
+
+                if (sortVal === 'dist-asc') {
+                    records.sort((a, b) => Number(a.distance) - Number(b.distance));
+                } else if (sortVal === 'dist-desc') {
+                    records.sort((a, b) => Number(b.distance) - Number(a.distance));
+                } else {
+                    records.sort((a, b) => {
+                        const ai = getMapId(a), bi = getMapId(b);
+                        if (ai !== null && bi !== null && ai !== bi) return ai - bi;
+
+                        const mapComp = String(a.map_name || a.nameMap || '').localeCompare(String(b.map_name || b.nameMap || ''));
+                        if (mapComp !== 0) return mapComp;
+
+                        const av = getVehicleId(a), bv = getVehicleId(b);
+                        if (av !== null && bv !== null && av !== bv) return av - bv;
+
+                        return String(a.vehicle_name || a.nameVehicle || '').localeCompare(String(b.vehicle_name || b.nameVehicle || ''));
+                    });
+                }
+
                 tableHTML += '<tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr>';
-                data.forEach(item => {
+                records.forEach(item => {
                     tableHTML += `<tr>
                                     <td>${item.distance}</td>
                                     <td>${item.map_name}</td>
@@ -149,6 +449,11 @@
                     <select id="map-filter" onchange="filterRecords()">
                         <option value="">Filter by Map</option>
                         ${[...new Set(allData.map(record => record.map_name))].map(map => `<option value="${map}">${map}</option>`).join('')}
+                    </select>
+                    <select id="sort-select" onchange="filterRecords()" title="Sort records">
+                        <option value="default">Default: Map / Vehicle Alphabetically</option>
+                        <option value="dist-asc">Distance ↑ (ascending)</option>
+                        <option value="dist-desc">Distance ↓ (descending)</option>
                     </select>
                     <select id="vehicle-filter" onchange="filterRecords()">
                         <option value="">Filter by Vehicle</option>
@@ -191,6 +496,7 @@
                 .then(response => response.json())
                 .then(data => {
                     const mapSelect = document.getElementById('map-select');
+                    mapSelect.innerHTML = '<option value="">Select a Map</option>';
                     data.forEach(map => {
                         const option = document.createElement('option');
                         option.value = map.idMap;
@@ -203,6 +509,7 @@
                 .then(response => response.json())
                 .then(data => {
                     const vehicleSelect = document.getElementById('vehicle-select');
+                    vehicleSelect.innerHTML = '<option value="">Select a Vehicle</option>';
                     data.forEach(vehicle => {
                         const option = document.createElement('option');
                         option.value = vehicle.idVehicle;
@@ -215,7 +522,9 @@
                 .then(response => response.json())
                 .then(data => {
                     const playerSelect = document.getElementById('player-select');
-                    data.forEach(player => {
+                    allPlayers = data || [];
+                    playerSelect.innerHTML = '<option value="">Select an Existing Player</option>';
+                    allPlayers.forEach(player => {
                         const option = document.createElement('option');
                         option.value = player.idPlayer;
                         option.textContent = player.namePlayer;
@@ -241,11 +550,30 @@
                 return;
             }
 
-            const formData = {
+            // If adding a new player, country must be provided
+            if (!playerId && newPlayerName && !country) {
+                document.getElementById('form-message').textContent = 'Please provide a country for the new player.';
+                document.getElementById('form-message').style.color = 'red';
+                return;
+            }
+
+            // include selected player's displayed name to help server-side lookup if needed
+            const selectedPlayerOption = document.getElementById('player-select').selectedOptions[0];
+            const selectedPlayerName = selectedPlayerOption ? selectedPlayerOption.textContent : '';
+
+            // If an existing player is selected (allow "0" id), send playerId and playerName; otherwise send newPlayerName and country
+            const hasPlayerId = (playerId !== null && playerId !== undefined && playerId !== '');
+            const formData = hasPlayerId ? {
                 mapId,
                 vehicleId,
                 distance,
                 playerId,
+                playerName: selectedPlayerName
+            } : {
+                mapId,
+                vehicleId,
+                distance,
+                playerId: null,
                 newPlayerName,
                 country
             };
@@ -262,8 +590,9 @@
                     document.getElementById('form-message').style.color = 'green';
                     document.getElementById('record-form').reset();
 
-                    // Refresh the delete record dropdown
+                    // Refresh the delete record dropdown and player lists (to include newly created player)
                     populateDeleteOptions();
+                    populateFormOptions();
                 } else {
                     document.getElementById('form-message').textContent = 'Error: ' + data.error;
                     document.getElementById('form-message').style.color = 'red';
@@ -334,7 +663,7 @@
         color: #333;
       }
       header {
-        background-color: #007bff;
+        background: linear-gradient(90deg, #007bff, #0056b3);
         color: white;
         padding: 20px;
         text-align: center;
@@ -350,13 +679,17 @@
         padding: 10px 20px;
         font-size: 16px;
         color: #fff;
-        background-color: #0056b3;
+        background: linear-gradient(0deg, #0056b3, #003d80);
         border: none;
         border-radius: 5px;
         cursor: pointer;
       }
       .header-buttons button:hover {
-        background-color: #003d80;
+        background: linear-gradient(0deg, #003d80, #042242);
+      }
+      .logo {
+        margin-bottom: 10px;
+        size: 120px;
       }
       main {
         padding: 20px;
@@ -367,7 +700,7 @@
         margin-top: 20px;
       }
       .summary-box {
-        background-color: #ffeb3b;
+        background: linear-gradient(90deg, #ffeb3b, #f4a107);
         padding: 20px;
         margin: 20px auto;
         width: 80%;
@@ -437,28 +770,147 @@
         cursor: pointer;
       }
       .form-container button:hover {
-        background-color: #0056b3;
+        /* background-color: #0056b3; */
+        background-color: linear-gradient(90deg, #007bff, #0056b3);
       }
       #data-container {
         display: none; 
       }
+      #stats-container {
+        display: none;
+      }
+      .stats-section {
+        margin: 30px auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        width: 90%;
+      }
+      .stats-section h3 {
+        color: #007bff;
+        margin-top: 0;
+      }
+      .chart-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+            /* Pie chart styles */
+            .pie-container {
+                display: flex;
+                gap: 20px;
+                align-items: center;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .pie-legend {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                max-width: 300px;
+                text-align: left;
+            }
+            .legend-item {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                font-size: 14px;
+            }
+            .legend-color {
+                width: 18px;
+                height: 18px;
+                border-radius: 3px;
+                display: inline-block;
+            }
+      .chart-bar {
+        display: grid;
+        grid-template-columns: 35px 140px 1fr;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+      }
+      .player-rank {
+        font-weight: bold;
+        text-align: right;
+      }
+      .player-name {
+        text-align: right;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .bar {
+        height: 30px;
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 10px;
+        min-width: 50px;
+      }
+      .bar-value {
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+      }
+      .overall-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
+      .stat-box {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 16px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .stat-box strong {
+        display: block;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+      .about-section {
+        background-color: #fff;
+        padding: 20px;
+        margin: 40px auto;
+        width: 80%;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+        #footer {
+            margin-top: 40px;
+            padding: 20px;
+            background : linear-gradient(90deg, #abc2c9, #c7d3d5);
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <header>
+        <img src="img/image.png" alt="HCR2 Logo" style="height: 120px; vertical-align: middle;" id ="logo">
         <h1>Hill Climb Racing 2 Adventure Records</h1>
         <div class="header-buttons">
             <button onclick="fetchData('maps')">Get Maps</button>
             <button onclick="fetchData('vehicles')">Get Vehicles</button>
             <button onclick="fetchData('players')">Get Players</button>
             <button onclick="fetchData('records')">Get Records</button>
+            <button onclick="fetchStats()">Stats</button>
         </div>
     </header>
     <main>
         <div id="summary-container"></div>
+        <div id="stats-container"></div>
         <div id="data-container"></div>
         <div id="record-form-container" class="form-container">
-            <h2>Submit a New Record</h2>
+            <h2>Submit a New Record ✅</h2>
             <form id="record-form" onsubmit="submitRecord(event)">
                 <label for="map-select">Map:</label>
                 <select id="map-select" required>
@@ -474,22 +926,23 @@
                 <input type="number" id="distance-input" placeholder="Enter distance" required>
                 <br><br>
                 <label for="player-select">Player:</label>
-                <select id="player-select">
+                <input type="text" id="player-filter" placeholder="Filter players..." oninput="filterPlayers()">
+                <select id="player-select" onchange="handlePlayerSelection()">
                     <option value="">Select an Existing Player</option>
                 </select>
                 <br><br>
                 <label for="new-player-input">Or Add New Player:</label>
-                <input type="text" id="new-player-input" placeholder="Enter new player name">
+                <input type="text" id="new-player-input" placeholder="Enter new player name" oninput="newPlayerTyped()">
                 <br><br>
                 <label for="country-input">Country:</label>
-                <input type="text" id="country-input" placeholder="Enter country" required>
+                <input type="text" id="country-input" placeholder="Enter country">
                 <br><br>
                 <button type="submit">Submit Record</button>
             </form>
             <p id="form-message" style="color: green;"></p>
         </div>
         <div id="delete-form-container" class="form-container">
-            <h2>Delete a Record</h2>
+            <h2>Delete a Record ❌</h2>
             <form id="delete-form" onsubmit="deleteRecord(event)">
                 <label for="record-select">Record:</label>
                 <select id="record-select" required>
@@ -500,6 +953,20 @@
             </form>
             <p id="delete-message" style="color: green;"></p>
         </div>
+        <div class="about-section" id="about-section">
+
+            <img src="img/image copy.png" alt="Info Icon" style="height: 200px; vertical-align: middle; margin-bottom: 10px;">
+
+            <h2>About Hill Climb Racing 2 Records ℹ️</h2>
+            <p id="about-text" style="max-width: 800px; margin: 0 auto; font-size: 16px; line-height: 1.5;">
+                Welcome to the Hill Climb Racing 2 Adventure Records page ! Here, players from around the world can submit and view the best distance records achieved in various maps using different vehicles. Our goal is to create a comprehensive leaderboard that showcases the skills and achievements of the HCR2 community, which includes every record from the leaderboard as well as challenge runs.
+            </p>
+        </div>
+        <footer id="footer">
+            <p id="copyright" style="text-align: center; margin-top: 40px; font-size: 14px; color: #777;">
+                &copy; 2025 - Hill Climb Racing 2 Adventure Records - Made by : Titanium Gaming HCR2 / Nipatsu HCR2 - All rights reserved.
+            </p>
+        </footer>
     </main>
 </body>
 </html>

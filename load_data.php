@@ -1,11 +1,14 @@
 <?php
 
+header('Content-Type: application/json');
+
 $db_file = './main.sqlite'; 
 try {
     $db = new PDO("sqlite:" . $db_file);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
-    die("Database connection failed: " . $e->getMessage());
+    echo json_encode(array('error' => "Database connection failed: " . $e->getMessage()));
+    exit;
 }
 
 function get_data($db, $table, $select = '*', $where = '', $order = '', $limit = '') {
@@ -23,8 +26,6 @@ function get_data($db, $table, $select = '*', $where = '', $order = '', $limit =
         return json_encode(array('error' => "Database error: " . $e->getMessage()));
     }
 }
-
-header('Content-Type: application/json');
 
 if (isset($_GET['type'])) {
     $type = $_GET['type'];
