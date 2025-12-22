@@ -341,3 +341,26 @@ flex: 0 0 18px;
     text-decoration: underline;
     color: #0056b3;
 }
+
+/* Responsive fix for Vehicle Statistics header: stack title above select on small screens */
+@media (max-width: 640px) {
+    .vehicle-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .vehicle-header .vehicle-title {
+        position: static !important;
+        transform: none !important;
+        text-align: center;
+        margin: 0;
+    }
+    .vehicle-header .vehicle-select-wrap {
+        display: flex;
+        justify-content: center;
+    }
+    #vehicle-sort-select {
+        width: 100%;
+        max-width: 360px;
+    }
+}

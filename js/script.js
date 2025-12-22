@@ -39,24 +39,29 @@ function displayStats(data) {
 const statsContainer = document.getElementById('stats-container');
 statsContainer.innerHTML = '<h2>DETAILED STATISTICS</h2>';
 
-const vehicleStats = {};
-data.forEach(record => {
-    if (!vehicleStats[record.vehicle_name]) {
-        vehicleStats[record.vehicle_name] = 0;
-    }
-    vehicleStats[record.vehicle_name] += record.distance;
-});
+// Store data globally for sorting
+window.statsData = data;
 
-const sortedVehicles = Object.entries(vehicleStats)
-    .sort((a, b) => b[1] - a[1]);
+// Create Vehicle Statistics section with dropdown
+let vehicleStatsHTML = '<div class="stats-section">';
+vehicleStatsHTML += '<div class="vehicle-header" style="position: relative; display: flex; align-items: center; justify-content: flex-end; margin-bottom: 15px;">';
+vehicleStatsHTML += '<h3 class="vehicle-title" style="position: absolute; left: 50%; transform: translateX(-50%); margin: 0;">Vehicle Statistics</h3>';
+vehicleStatsHTML += '<div class="vehicle-select-wrap" style="margin-left: auto;">';
+vehicleStatsHTML += '<select id="vehicle-sort-select" onchange="updateVehicleStats()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px;">';
+vehicleStatsHTML += '<option value="total-distance">Total Distance</option>';
+vehicleStatsHTML += '<option value="longest-distance">Longest Distance</option>';
+vehicleStatsHTML += '<option value="avg-placement">Average Placement (Ascending)</option>';
+vehicleStatsHTML += '<option value="highest-placement">Highest Placement</option>';
+vehicleStatsHTML += '<option value="lowest-placement">Lowest Placement</option>';
+vehicleStatsHTML += '</select>';
+vehicleStatsHTML += '</div>';
+vehicleStatsHTML += '</div>';
+vehicleStatsHTML += '<div id="vehicle-stats-table"></div>';
+vehicleStatsHTML += '</div>';
+statsContainer.innerHTML += vehicleStatsHTML;
 
-let vehicleHTML = '<div class="stats-section"><h3>Vehicle Rankings by Total Distance</h3><table>';
-vehicleHTML += '<tr><th>Rank</th><th>Vehicle Name</th><th>Total Distance</th></tr>';
-sortedVehicles.forEach((vehicle, index) => {
-    vehicleHTML += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1]}</td></tr>`;
-});
-vehicleHTML += '</table></div>';
-statsContainer.innerHTML += vehicleHTML;
+// Display initial vehicle stats (Total Distance)
+updateVehicleStats();
 
 
 // Vehicle Rankings by Adventure Stars
@@ -239,6 +244,177 @@ overallHTML += `<div class="stat-box"><strong>Unique Vehicles:</strong> ${unique
 overallHTML += `<div class="stat-box"><strong>Unique Maps:</strong> ${uniqueMaps}</div>`;
 overallHTML += '</div></div>';
 statsContainer.innerHTML += overallHTML;
+}
+
+function updateVehicleStats() {
+const data = window.statsData;
+const sortType = document.getElementById('vehicle-sort-select').value;
+const tableContainer = document.getElementById('vehicle-stats-table');
+let html = '<table>';
+
+if (sortType === 'total-distance') {
+    // Sort by Total Distance
+    const vehicleStats = {};
+    data.forEach(record => {
+        if (!vehicleStats[record.vehicle_name]) {
+            vehicleStats[record.vehicle_name] = 0;
+        }
+        vehicleStats[record.vehicle_name] += record.distance;
+    });
+
+    const sortedVehicles = Object.entries(vehicleStats).sort((a, b) => b[1] - a[1]);
+    
+    html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Total Distance</th></tr>';
+    sortedVehicles.forEach((vehicle, index) => {
+        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1].toLocaleString()}</td></tr>`;
+    });
+
+} else if (sortType === 'longest-distance') {
+    // Sort by Longest Distance with Map name
+    const vehicleLongest = {};
+    data.forEach(record => {
+        if (!vehicleLongest[record.vehicle_name]) {
+            vehicleLongest[record.vehicle_name] = { distance: 0, map: '' };
+        }
+        if (record.distance > vehicleLongest[record.vehicle_name].distance) {
+            vehicleLongest[record.vehicle_name] = { distance: record.distance, map: record.map_name };
+        }
+    });
+
+    const sortedByLongest = Object.entries(vehicleLongest)
+        .sort((a, b) => b[1].distance - a[1].distance);
+
+    html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Longest Distance</th><th>Map</th></tr>';
+    sortedByLongest.forEach((vehicle, index) => {
+        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1].distance.toLocaleString()}</td><td>${vehicle[1].map}</td></tr>`;
+    });
+
+} else if (sortType === 'avg-placement') {
+    // Sort by Average Placement (ascending)
+    const vehiclePlacements = {};
+    
+    // Group records by map
+    const mapData = {};
+    data.forEach(record => {
+        if (!mapData[record.map_name]) {
+            mapData[record.map_name] = [];
+        }
+        mapData[record.map_name].push(record);
+    });
+
+    // Calculate placement for each vehicle on each map
+    Object.keys(mapData).forEach(mapName => {
+        const mapRecords = mapData[mapName];
+        // Sort by distance descending to get placements
+        mapRecords.sort((a, b) => b.distance - a.distance);
+        
+        mapRecords.forEach((record, placement) => {
+            if (!vehiclePlacements[record.vehicle_name]) {
+                vehiclePlacements[record.vehicle_name] = { placements: [], totalPlacement: 0 };
+            }
+            vehiclePlacements[record.vehicle_name].placements.push({ map: mapName, placement: placement + 1, distance: record.distance });
+            vehiclePlacements[record.vehicle_name].totalPlacement += (placement + 1);
+        });
+    });
+
+    // Calculate average placement
+    Object.keys(vehiclePlacements).forEach(vehicleName => {
+        const data = vehiclePlacements[vehicleName];
+        data.avgPlacement = data.totalPlacement / data.placements.length;
+    });
+
+    const sortedByAvgPlacement = Object.entries(vehiclePlacements)
+        .sort((a, b) => a[1].avgPlacement - b[1].avgPlacement);
+
+    html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Average Placement</th></tr>';
+    sortedByAvgPlacement.forEach((vehicle, index) => {
+        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1].avgPlacement.toFixed(2)}</td></tr>`;
+    });
+
+} else if (sortType === 'highest-placement') {
+    // Sort by Highest Placement (1st place across all maps)
+    const vehicleHighest = {};
+    
+    const mapData = {};
+    data.forEach(record => {
+        if (!mapData[record.map_name]) {
+            mapData[record.map_name] = [];
+        }
+        mapData[record.map_name].push(record);
+    });
+
+    // Find highest placement for each vehicle
+    Object.keys(mapData).forEach(mapName => {
+        const mapRecords = mapData[mapName];
+        mapRecords.sort((a, b) => b.distance - a.distance);
+        
+        mapRecords.forEach((record, placement) => {
+            if (!vehicleHighest[record.vehicle_name]) {
+                vehicleHighest[record.vehicle_name] = { placement: Infinity, maps: [] };
+            }
+            const currentPlacement = placement + 1;
+            if (currentPlacement < vehicleHighest[record.vehicle_name].placement) {
+                vehicleHighest[record.vehicle_name].placement = currentPlacement;
+                vehicleHighest[record.vehicle_name].maps = [mapName];
+            } else if (currentPlacement === vehicleHighest[record.vehicle_name].placement) {
+                vehicleHighest[record.vehicle_name].maps.push(mapName);
+            }
+        });
+    });
+
+    const sortedByHighest = Object.entries(vehicleHighest)
+        .filter(v => v[1].placement !== Infinity)
+        .sort((a, b) => a[1].placement - b[1].placement);
+
+    html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Best Placement</th><th>Maps</th></tr>';
+    sortedByHighest.forEach((vehicle, index) => {
+        const mapsStr = vehicle[1].maps.join(', ');
+        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>#${vehicle[1].placement}</td><td>${mapsStr}</td></tr>`;
+    });
+
+} else if (sortType === 'lowest-placement') {
+    // Sort by Lowest Placement (worst place across all maps)
+    const vehicleLowest = {};
+    
+    const mapData = {};
+    data.forEach(record => {
+        if (!mapData[record.map_name]) {
+            mapData[record.map_name] = [];
+        }
+        mapData[record.map_name].push(record);
+    });
+
+    // Find lowest placement for each vehicle
+    Object.keys(mapData).forEach(mapName => {
+        const mapRecords = mapData[mapName];
+        mapRecords.sort((a, b) => b.distance - a.distance);
+        
+        mapRecords.forEach((record, placement) => {
+            if (!vehicleLowest[record.vehicle_name]) {
+                vehicleLowest[record.vehicle_name] = { placement: 0, maps: [] };
+            }
+            const currentPlacement = placement + 1;
+            if (currentPlacement > vehicleLowest[record.vehicle_name].placement) {
+                vehicleLowest[record.vehicle_name].placement = currentPlacement;
+                vehicleLowest[record.vehicle_name].maps = [mapName];
+            } else if (currentPlacement === vehicleLowest[record.vehicle_name].placement) {
+                vehicleLowest[record.vehicle_name].maps.push(mapName);
+            }
+        });
+    });
+
+    const sortedByLowest = Object.entries(vehicleLowest)
+        .sort((a, b) => b[1].placement - a[1].placement);
+
+    html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Worst Placement</th><th>Maps</th></tr>';
+    sortedByLowest.forEach((vehicle, index) => {
+        const mapsStr = vehicle[1].maps.join(', ');
+        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>#${vehicle[1].placement}</td><td>${mapsStr}</td></tr>`;
+    });
+}
+
+html += '</table>';
+tableContainer.innerHTML = html;
 }
 
 function filterPlayers() {
