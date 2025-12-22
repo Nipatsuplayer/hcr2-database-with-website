@@ -594,12 +594,25 @@ fetch('submit_record.php', {
         return;
     }
     if (data.success) {
-        document.getElementById('form-message').textContent = 'Record submitted successfully!';
-        document.getElementById('form-message').style.color = 'green';
+        const mapName = data.mapName || 'Unknown';
+        const vehicleName = data.vehicleName || 'Unknown';
+        const playerName = data.playerName || 'Unknown';
+        const distance = data.distance || '?';
+        
+        const successMsg = `✅ Record submitted! | ${playerName} | ${mapName} | ${vehicleName} | ${distance}m`;
+        const msgEl = document.getElementById('form-message');
+        msgEl.textContent = successMsg;
+        msgEl.style.color = 'green';
+        msgEl.style.display = 'block';
         document.getElementById('record-form').reset();
 
         populateDeleteOptions();
         populateFormOptions();
+        
+        // Garder le message visible pendant 5 secondes
+        setTimeout(() => {
+            msgEl.textContent = '';
+        }, 5000);
     } else {
         document.getElementById('form-message').textContent = 'Error: ' + (data.error || 'Unknown error');
         document.getElementById('form-message').style.color = 'red';

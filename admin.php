@@ -174,10 +174,13 @@ function submitRecord(e) {
             return;
         }
         if (data.success) {
-            showFormMessage('Record submitted successfully!', false);
+            const msg = `✅ Record submitted! | ${data.playerName || 'Unknown'} | ${data.mapName || 'Unknown'} | ${data.vehicleName || 'Unknown'} | ${data.distance || '?'}m`;
+            showFormMessage(msg, false);
             document.getElementById('record-form').reset();
             populateFormOptions();
             populateDeleteOptions();
+            // Garder le message visible pendant 5 secondes
+            setTimeout(() => document.getElementById('form-message').textContent = '', 5000);
         } else {
             showFormMessage(data.error || 'Unknown error', true);
         }

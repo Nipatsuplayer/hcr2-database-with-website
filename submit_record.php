@@ -87,7 +87,35 @@ try {
 
     $db->commit();
 
-    echo json_encode(['success' => true, 'playerId' => $playerId]);
+    // Récupérer les noms de la map, du véhicule et du joueur pour la réponse
+    $mapStmt = $db->prepare('SELECT nameMap FROM Map WHERE idMap = :idMap LIMIT 1');
+    $mapStmt->execute([':idMap' => $mapId]);
+    $mapRow = $mapStmt->fetch(PDO::FETCH_ASSOC);
+    $mapName = $mapRow ? $mapRow['nameMap'] : 'Unknown';
+
+    $vehicleStmt = $db->prepare('SELECT nameVehicle FROM Vehicle WHERE idVehicle = :idVehicle LIMIT 1');
+    $vehicleStmt->execute([':idVehicle' => $vehicleId]);
+    $vehicleRow = $vehicleStmt->fetch(PDO::FETCH_ASSOC);
+    $vehicleName = $vehicleRow ? $vehicleRow['nameVehicle'] : 'Unknown';
+
+    $playerName = 'Unknown';
+    if (!is_null($playerId)) {
+        $playerStmt = $db->prepare('SELECT namePlayer FROM Player WHERE idPlayer = :idPlayer LIMIT 1');
+        $playerStmt->execute([':idPlayer' => $playerId]);
+        $playerRow = $playerStmt->fetch(PDO::FETCH_ASSOC);
+        $playerName = $playerRow ? $playerRow['namePlayer'] : 'Unknown';
+    } elseif (!empty($newPlayerName)) {
+        $playerName = $newPlayerName;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'playerId' => $playerId,
+        'mapName' => $mapName,
+        'vehicleName' => $vehicleName,
+        'playerName' => $playerName,
+        'distance' => $distance
+    ]);
 } catch (PDOException $e) {
     echo json_encode(['error' => "Database error: " . $e->getMessage()]);
 }
