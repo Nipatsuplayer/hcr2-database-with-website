@@ -4,6 +4,9 @@ font-family: Arial, sans-serif;
 margin: 0;
 padding: 0;
 background-color: #f4f4f9;
+display: flex;
+flex-direction: column;
+min-height: 100vh;
 color: #333;
 }
 header {
@@ -89,6 +92,7 @@ font-weight: 600;
 main {
 padding: 20px;
 text-align: center;
+flex: 1;
 }
 h2 {
 text-align: center;
@@ -310,6 +314,11 @@ font-size: 13px;
 line-height: 1;
 overflow: visible;
 }
+.discord-btn span {
+    display: inline-block;
+    /* fine-tune vertical position of the text without moving the icon */
+    transform: translateY(-5px);
+}
 .discord-logo {
 width: 18px;
 height: 18px;
@@ -317,3 +326,18 @@ display: inline-block;
 flex: 0 0 18px;
 }
 .discord-btn:hover { filter: brightness(0.95); }
+.social-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    margin: 8px 0;
+}
+.social-link a {
+    color: #007bff;
+    text-decoration: none;
+}
+.social-link a:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
