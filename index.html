@@ -44,50 +44,7 @@
         <div id="summary-container"></div>
         <div id="stats-container"></div>
         <div id="data-container"></div>
-        <div id="record-form-container" class="form-container" style="display:none;">
-            <h2>Submit a New Record ✅</h2>
-            <form id="record-form" onsubmit="submitRecord(event)">
-                <label for="map-select">Map:</label>
-                <select id="map-select" required>
-                    <option value="">Select a Map</option>
-                </select>
-                <br><br>
-                <label for="vehicle-select">Vehicle:</label>
-                <select id="vehicle-select" required>
-                    <option value="">Select a Vehicle</option>
-                </select>
-                <br><br>
-                <label for="distance-input">Distance:</label>
-                <input type="number" id="distance-input" placeholder="Enter distance" required>
-                <br><br>
-                <label for="player-select">Player:</label>
-                <input type="text" id="player-filter" placeholder="Filter players..." oninput="filterPlayers()">
-                <select id="player-select" onchange="handlePlayerSelection()">
-                    <option value="">Select an Existing Player</option>
-                </select>
-                <br><br>
-                <label for="new-player-input">Or Add New Player:</label>
-                <input type="text" id="new-player-input" placeholder="Enter new player name" oninput="newPlayerTyped()">
-                <br><br>
-                <label for="country-input">Country:</label>
-                <input type="text" id="country-input" placeholder="Enter country">
-                <br><br>
-                <button type="submit">Submit Record</button>
-            </form>
-            <p id="form-message" style="color: green;"></p>
-        </div>
-        <div id="delete-form-container" class="form-container" style="display:none;">
-            <h2>Delete a Record ❌</h2>
-            <form id="delete-form" onsubmit="deleteRecord(event)">
-                <label for="record-select">Record:</label>
-                <select id="record-select" required>
-                    <option value="">Select a Record</option>
-                </select>
-                <br><br>
-                <button type="submit">Delete Record</button>
-            </form>
-            <p id="delete-message" style="color: green;"></p>
-        </div>
+    
         <div class="about-section" id="about-section">
 
             <img src="img/image copy.png" alt="Info Icon" style="height: 200px; vertical-align: middle; margin-bottom: 10px;">
@@ -95,6 +52,24 @@
             <h2>About Hill Climb Racing 2 Records ℹ️</h2>
             <p id="about-text" style="max-width: 800px; margin: 0 auto; font-size: 16px; line-height: 1.5;">
                 Welcome to the Hill Climb Racing 2 Adventure Records page ! Here, players from around the world can view the best distance records achieved in various maps using different vehicles. Our goal is to create a comprehensive leaderboard that showcases the skills and achievements of the HCR2 community, which includes every record from leaderboards as well as challenge runs.
+            </p>
+            <h2>Record Guidelines 📝</h2>
+            <p id="rules-text">
+                <ul style="list-style-type: disc; padding-left: 20px; line-height: 1.5; max-width: 800px; margin: 0 auto; font-size: 16px;">
+                    <li>We will be including records from the official Adventure leaderboards, but runs from Adventure challenges will also be accepted.</li>
+                    <li>No records using patched glitches or vehicles before nerfs (eg : Eco-Thrust Bug Moonlander, Pre-nerf Minibus) will be added here, for the sake of consistency.</li>
+                    <li>Obviously, no records using respawns will be added, as they offer an unfair advantage.</li>
+                    <li>In case of a tie, the first player to achieve the record distance will be considered the World Record Holder.</li>
+                    <li>Admins will review all submissions and may remove records if they are found to be invalid or in violation of these rules.</li>
+                </ul>
+            </p>
+            <h2>Viewing Records 🏆</h2>
+            <p id="viewing-text" style="max-width: 800px; margin: 0 auto; font-size: 16px; line-height: 1.5;">
+                To view records, go to  the "Get Records" section. The records will be displayed in a table format, showing the map name, vehicle name, player name, and the distance achieved. Select a map / vehicle of your choice from the dropdown menus to filter the records by map and / or vehicle, or type in a specific player name to search for their records. You can also sort the records by distance to see the highest or lowest records first.
+            </p>
+            <h2>Statistics 📊</h2>
+            <p id="stats-text" style="max-width: 800px; margin: 0 auto; font-size: 16px; line-height: 1.5;">
+                Our stats section provides detailed insights into the performance of vehicles, maps, and players in the HCR2 community. You can explore various statistics such as the number of records held by top players, the vehicles with the highest total distance, and the distribution of records across different maps.
             </p>
             <h2>Follow Us 📢</h2>
             <p id="follow-text" style=

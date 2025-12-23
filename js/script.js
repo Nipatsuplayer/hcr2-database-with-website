@@ -50,7 +50,7 @@ vehicleStatsHTML += '<div class="vehicle-select-wrap" style="margin-left: auto;"
 vehicleStatsHTML += '<select id="vehicle-sort-select" onchange="updateVehicleStats()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px;">';
 vehicleStatsHTML += '<option value="total-distance">Total Distance</option>';
 vehicleStatsHTML += '<option value="longest-distance">Longest Distance</option>';
-vehicleStatsHTML += '<option value="avg-placement">Average Placement (Ascending)</option>';
+vehicleStatsHTML += '<option value="avg-placement">Average Placement </option>';
 vehicleStatsHTML += '<option value="highest-placement">Highest Placement</option>';
 vehicleStatsHTML += '<option value="lowest-placement">Lowest Placement</option>';
 vehicleStatsHTML += '</select>';

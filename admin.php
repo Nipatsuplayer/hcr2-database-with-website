@@ -39,7 +39,7 @@ if (!$logged || !$allowed) {
     </div>
 
     <div class="form-container">
-        <h2>Submit a New Record</h2>
+        <h2>Submit a New Record ✅</h2>
         <form id="record-form" onsubmit="submitRecord(event)">
             <label>Map</label>
             <select id="map-select" required></select>
@@ -60,7 +60,7 @@ if (!$logged || !$allowed) {
     </div>
 
     <div class="form-container">
-        <h2>Delete a Record</h2>
+        <h2>Delete a Record ❌</h2>
         <form id="delete-form" onsubmit="deleteRecord(event)">
             <label>Record</label>
             <select id="record-select" required><option value="">Select a record</option></select>
