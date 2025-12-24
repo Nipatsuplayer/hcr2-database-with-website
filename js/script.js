@@ -89,6 +89,13 @@ data.forEach(record => {
 const sortedVehiclesByStars = Object.entries(vehicleStars)
     .sort((a, b) => b[1] - a[1]);
 
+// Calculer le total des étoiles
+
+let totalStars = 0;
+sortedVehiclesByStars.forEach(v => { totalStars += v[1]; });
+
+// Générer le HTML pour le classement des véhicules par étoiles d'aventure
+
 let starsHTML = '<div class="stats-section"><h3>Vehicle Rankings by Adventure Stars</h3>';
 starsHTML += '<div class="chart-container">';
 
@@ -106,6 +113,8 @@ sortedVehiclesByStars.forEach((vehicle, index) => {
     `;
 });
 
+starsHTML += `<div class="total-stars"> ⭐ Total Adventure Stars : </div>`;
+starsHTML += `<div class="total-stars-value">${totalStars.toLocaleString()}</div>`;
 starsHTML += '</div></div>';
 statsContainer.innerHTML += starsHTML;
 
