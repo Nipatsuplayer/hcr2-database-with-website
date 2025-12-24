@@ -427,52 +427,60 @@ tableContainer.innerHTML = html;
 }
 
 function filterPlayers() {
-const query = document.getElementById('player-filter').value.toLowerCase();
-const select = document.getElementById('player-select');
-select.innerHTML = '<option value="">Select an Existing Player</option>';
-allPlayers
-    .filter(p => p.namePlayer.toLowerCase().includes(query))
-    .forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.idPlayer;
-        option.textContent = p.namePlayer;
-        select.appendChild(option);
-    });
-handlePlayerSelection();
+    const query = document.getElementById('player-filter').value.toLowerCase();
+    const select = document.getElementById('player-select');
+    select.innerHTML = '<option value="">Select an Existing Player</option>';
+    allPlayers
+        .filter(p => p.namePlayer.toLowerCase().includes(query))
+        .forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.idPlayer;
+            option.textContent = p.namePlayer;
+            select.appendChild(option);
+        });
+    handlePlayerSelection();
 }
 
-function handlePlayerSelection() {
-const select = document.getElementById('player-select');
-const countryInput = document.getElementById('country-input');
-const playerId = select.value;
-const newPlayerInput = document.getElementById('new-player-input');
+function downloadCSV(dataArray) {
+    const headers = ['Distance','Map Name','Vehicle Name','Player Name','Country'];
+    const rows = dataArray.map(r => [
+        r.distance,
+        r.map_name,
+        r.vehicle_name,
+        r.player_name,
+        r.player_country
+    ]);
 
-if (playerId) {
-    const player = allPlayers.find(p => String(p.idPlayer) === String(playerId));
-    if (player) {
-        countryInput.value = player.country || '';
-        countryInput.disabled = true;
+    const escapeCell = (v) => {
+        if (v === null || v === undefined) return '';
+        const s = v.toString();
+        if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+            return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+    };
+
+    const csvContent = [headers.map(escapeCell).join(',')].concat(rows.map(r => r.map(escapeCell).join(','))).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `HCR2_Records_${timestamp}.csv`;
+
+    if (navigator.msSaveBlob) { // IE10+
+        navigator.msSaveBlob(blob, filename);
     } else {
-        countryInput.value = '';
-        countryInput.disabled = false;
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
-    newPlayerInput.value = '';
-} else {
-    countryInput.value = '';
-    countryInput.disabled = false;
-}
 }
 
-function newPlayerTyped() {
-const newPlayerInput = document.getElementById('new-player-input');
-const playerSelect = document.getElementById('player-select');
-const countryInput = document.getElementById('country-input');
-
-if (newPlayerInput.value && newPlayerInput.value.trim() !== '') {
-    playerSelect.value = '';
-    countryInput.disabled = false;
-}
-}
 
 function fetchData(dataType) {
 const container = document.getElementById('data-container');
@@ -644,6 +652,7 @@ const container = document.getElementById('data-container');
 const searchHTML = `
     <div id="filter-container" class="filter-container">
         <input type="text" id="search-bar" placeholder="Search by player, map, or vehicle..." oninput="filterRecords()">
+    <button id="export-btn" onclick="exportToCSV()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background-color: #28a745; color: white; cursor: pointer; font-size: 14px; margin-left: 8px;">📥 Export CSV</button>
         <select id="map-filter" onchange="filterRecords()">
             <option value="">Filter by Map</option>
             ${[...new Set(allData.map(record => record.map_name))].map(map => `<option value="${map}">${map}</option>`).join('')}
@@ -862,4 +871,27 @@ fetch('delete_record.php', {
     document.getElementById('delete-message').textContent = 'Error deleting record.';
     document.getElementById('delete-message').style.color = 'red';
 });
+}
+
+function exportToCSV() {
+    // Default export: CSV
+    const searchQuery = (document.getElementById('search-bar')?.value || '').toLowerCase();
+    const mapFilter = (document.getElementById('map-filter')?.value) || '';
+    const vehicleFilter = (document.getElementById('vehicle-filter')?.value) || '';
+
+    const filteredData = (allData || []).filter(record => {
+        const matchesSearch = (record.player_name || '').toString().toLowerCase().includes(searchQuery) ||
+                              (record.map_name || '').toString().toLowerCase().includes(searchQuery) ||
+                              (record.vehicle_name || '').toString().toLowerCase().includes(searchQuery);
+        const matchesMap = !mapFilter || record.map_name === mapFilter;
+        const matchesVehicle = !vehicleFilter || record.vehicle_name === vehicleFilter;
+        return matchesSearch && matchesMap && matchesVehicle;
+    });
+
+    if (!filteredData || filteredData.length === 0) {
+        alert('No records to export. Please check your filters.');
+        return;
+    }
+
+    downloadCSV(filteredData);
 }
