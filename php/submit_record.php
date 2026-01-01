@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/auth/check_auth.php';
+require_once __DIR__ . '/../auth/check_auth.php';
 ensure_authorized_json();
 
 $db_file = __DIR__ . '/../main.sqlite';

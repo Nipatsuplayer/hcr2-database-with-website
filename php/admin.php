@@ -107,6 +107,16 @@ if (!$logged || !$allowed) {
     </div>
 
 <script>
+function esc(input) {
+    if (input === null || input === undefined) return '';
+    return String(input)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 let allPlayers = [];
 
 async function fetchJSON(url) {
