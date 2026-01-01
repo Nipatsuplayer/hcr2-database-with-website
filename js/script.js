@@ -719,7 +719,7 @@ try {
     if (status.logged && status.allowed) {
         if (adminBtn) {
             adminBtn.style.display = 'inline-block';
-            adminBtn.onclick = () => location.href = '/admin.php';
+            adminBtn.onclick = () => location.href = 'php/admin.php';
         }
         if (authWarning) authWarning.textContent = '';
     } else {
