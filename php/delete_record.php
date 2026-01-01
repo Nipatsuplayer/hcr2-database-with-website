@@ -2,7 +2,7 @@
 require_once __DIR__ . '/auth/check_auth.php';
 ensure_authorized_json();
 
-$db_file = './main.sqlite';
+$db_file = __DIR__ . '/../main.sqlite';
 
 try {
     $db = new PDO("sqlite:" . $db_file);

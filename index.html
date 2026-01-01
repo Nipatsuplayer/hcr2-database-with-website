@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/style.css">
-    <title>Hill Climb Racing 2 Records</title>
+    <title>Hcr2 Database</title>
     
 
     
@@ -27,6 +27,8 @@
                     <button onclick="fetchData('players')">Get Players</button>
                     <button onclick="fetchData('records')">Get Records</button>
                     <button onclick="fetchStats()">Stats</button>
+                    <button onclick="togglePublicSubmitForm()">Submit Record</button>
+                    <button onclick="toggleNewsModal()">News</button>
 
                 <button id="login-btn" class="discord-btn" onclick="location.href='auth/discord_login.php'">
                     <img class="discord-logo" src="img/Discord-Symbol-Blurple.png" alt="Discord">
@@ -41,7 +43,6 @@
     </header>
 
     <main>
-        <div id="summary-container"></div>
         <div id="stats-container"></div>
         <div id="data-container"></div>
     
@@ -79,12 +80,59 @@
                     <p class = "social-link"><a rel="noopener noreferrer" href="https://www.youtube.com/@nipatsu" target="_blank">Nipatsu HCR2</a></p>
                 </ul>
         </div>
+        
+        <!-- Public submission modal (hidden overlay) -->
+        <div id="public-submit-overlay" class="modal-overlay" style="display:none;">
+            <div class="modal-panel form-container" role="dialog" aria-modal="true" aria-labelledby="public-submit-title">
+                <button class="modal-close" onclick="togglePublicSubmitForm()" aria-label="Close">✕</button>
+                <h2 id="public-submit-title">Submit a Record (for admin review)</h2>
+                <form id="public-submit-form" onsubmit="submitPublicRecord(event)">
+                    <label>Map</label>
+                    <select id="public-map-select" required></select>
+                    <label>Vehicle</label>
+                    <select id="public-vehicle-select" required></select>
+                    <label>Distance</label>
+                    <input type="number" id="public-distance-input" required min="1">
+                    <label>Player name</label>
+                    <input type="text" id="public-player-name" required>
+                    <label>Country (optional)</label>
+                    <input type="text" id="public-player-country">
+                    <!-- Honeypot field to catch bots (should remain empty) -->
+                    <div style="position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;">
+                        <label for="hp_email">Leave this field empty</label>
+                        <input type="text" id="hp_email" name="hp_email" autocomplete="off" tabindex="-1">
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:12px;">
+                        <button type="submit">Send Submission</button>
+                        <button type="button" onclick="togglePublicSubmitForm()" style="background:#ccc; color:#000;">Cancel</button>
+                    </div>
+                </form>
+                <p id="public-submit-message" style="margin-top:10px;"></p>
+            </div>
+        </div>
+        <!-- News modal -->
+        <div id="news-overlay" class="modal-overlay" style="display:none;">
+            <div class="modal-panel form-container" role="dialog" aria-modal="true" aria-labelledby="news-title">
+                <button class="modal-close" onclick="toggleNewsModal()" aria-label="Close">✕</button>
+                <h2 id="news-title">Recent News</h2>
+                <div id="news-list" style="max-height:60vh; overflow:auto; text-align:left;">
+                    <p>Loading news...</p>
+                </div>
+                <div style="text-align:right; margin-top:12px;"><button onclick="toggleNewsModal()" style="background:#ccc;color:#000;">Close</button></div>
+            </div>
+        </div>
         <footer id="footer">
-            <p id="copyright" style="text-align: center; margin-top: 40px; font-size: 14px; color: #777;">
+            <p id="copyright" style="text-align: center; margin-top: 24px; font-size: 14px; color: #777;">
                 &copy; 2025 - Hill Climb Racing 2 Adventure Records - Made by : Titanium Gaming HCR2 / Nipatsu HCR2 - All rights reserved.
+            </p>
+            <p class="github-meta" style="margin-top:8px; font-size:13px; color:#555;">
+                Source code: <a id="github-link" href="https://github.com/Nipatsuplayer/hcr2-database-with-website" target="_blank" rel="noopener noreferrer">GitHub</a>
+                &nbsp;—&nbsp;Version: <span id="github-version">loading...</span>
+                &nbsp;—&nbsp;<a href="privacy.html" id="privacy-link">Privacy Policy</a>
             </p>
         </footer>
     </main>
 <script src="js/script.js"></script>
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="nipatsu" data-color="#FFDD00" data-emoji="🚗"  data-font="Cookie" data-text="Support Us!" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>
 </body>
 </html>

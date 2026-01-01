@@ -2,7 +2,7 @@
 require_once __DIR__ . '/auth/check_auth.php';
 ensure_authorized_json();
 
-$db_file = './main.sqlite';
+$db_file = __DIR__ . '/../main.sqlite';
 
 try {
     $db = new PDO("sqlite:" . $db_file);
@@ -87,7 +87,6 @@ try {
 
     $db->commit();
 
-    // Récupérer les noms de la map, du véhicule et du joueur pour la réponse
     $mapStmt = $db->prepare('SELECT nameMap FROM Map WHERE idMap = :idMap LIMIT 1');
     $mapStmt->execute([':idMap' => $mapId]);
     $mapRow = $mapStmt->fetch(PDO::FETCH_ASSOC);

@@ -2,7 +2,7 @@
 
 header('Content-Type: application/json');
 
-$db_file = './main.sqlite'; 
+$db_file = __DIR__ . '/../main.sqlite';
 try {
     $db = new PDO("sqlite:" . $db_file);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

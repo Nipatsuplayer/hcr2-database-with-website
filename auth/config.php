@@ -32,3 +32,25 @@ if ($raw !== '') {
 }
 
 $DISCORD_OAUTH_CONFIGURED = (!empty($DISCORD_CLIENT_ID) && !empty($DISCORD_CLIENT_SECRET) && !empty($DISCORD_REDIRECT_URI));
+
+if (!headers_sent()) {
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: DENY');
+    header('Referrer-Policy: no-referrer-when-downgrade');
+    header("Permissions-Policy: interest-cohort=()");
+    header('X-Permitted-Cross-Domain-Policies: none');
+
+    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://api.github.com https://cdnjs.buymeacoffee.com; connect-src 'self' https://api.github.com https://cdnjs.buymeacoffee.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;";
+    header('Content-Security-Policy: ' . $csp);
+
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        header('Strict-Transport-Security: max-age=63072000; includeSubDomains; preload');
+    }
+}
+
+ini_set('session.use_strict_mode', 1);
+ini_set('session.cookie_httponly', 1);
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    ini_set('session.cookie_secure', 1);
+}
+ini_set('session.cookie_samesite', 'Lax');

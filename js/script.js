@@ -2,6 +2,23 @@ let allData = [];
 let currentDataType = ''; 
 let allPlayers = []; 
 
+function esc(input) {
+    if (input === null || input === undefined) return '';
+    return String(input)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function fetchWithTimeout(resource, options = {}, timeout = 3000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    const opts = Object.assign({}, options, { signal: controller.signal });
+    return fetch(resource, opts).finally(() => clearTimeout(id));
+}
+
 
 function fetchStats() {
 const statsContainer = document.getElementById('stats-container');
@@ -19,7 +36,7 @@ dataContainer.style.display = 'none';
 if (filterContainer) filterContainer.style.display = 'none';
 statsContainer.style.display = 'block';
 
-fetch('load_data.php?type=records')
+    fetch('php/load_data.php?type=records')
     .then(response => response.json())
     .then(data => {
         if (data.error) {
@@ -39,10 +56,8 @@ function displayStats(data) {
 const statsContainer = document.getElementById('stats-container');
 statsContainer.innerHTML = '<h2>DETAILED STATISTICS</h2>';
 
-// Store data globally for sorting
 window.statsData = data;
 
-// Create Vehicle Statistics section with dropdown
 let vehicleStatsHTML = '<div class="stats-section">';
 vehicleStatsHTML += '<div class="vehicle-header" style="position: relative; display: flex; align-items: center; justify-content: flex-end; margin-bottom: 15px;">';
 vehicleStatsHTML += '<h3 class="vehicle-title" style="position: absolute; left: 50%; transform: translateX(-50%); margin: 0;">Vehicle Statistics</h3>';
@@ -60,11 +75,8 @@ vehicleStatsHTML += '<div id="vehicle-stats-table"></div>';
 vehicleStatsHTML += '</div>';
 statsContainer.innerHTML += vehicleStatsHTML;
 
-// Display initial vehicle stats (Total Distance)
 updateVehicleStats();
 
-
-// Vehicle Rankings by Adventure Stars
 const specialMaps = ['Forest Trials', 'Intense City', 'Raging Winter'];
 const vehicleStars = {};
 data.forEach(record => {
@@ -76,10 +88,8 @@ data.forEach(record => {
     let stars = 0;
     
     if (isSpecialMap) {
-        // Maps spéciales: >= 5000 = 15000 étoiles, sinon distance * 3
         stars = record.distance >= 5000 ? 15000 : record.distance * 3;
     } else {
-        // Maps normales: >= 10000 = 10000 étoiles, sinon distance
         stars = record.distance >= 10000 ? 10000 : record.distance;
     }
     
@@ -89,12 +99,8 @@ data.forEach(record => {
 const sortedVehiclesByStars = Object.entries(vehicleStars)
     .sort((a, b) => b[1] - a[1]);
 
-// Calculer le total des étoiles
-
 let totalStars = 0;
 sortedVehiclesByStars.forEach(v => { totalStars += v[1]; });
-
-// Générer le HTML pour le classement des véhicules par étoiles d'aventure
 
 let starsHTML = '<div class="stats-section"><h3>Vehicle Rankings by Adventure Stars</h3>';
 starsHTML += '<div class="chart-container">';
@@ -105,7 +111,7 @@ sortedVehiclesByStars.forEach((vehicle, index) => {
     starsHTML += `
         <div class="chart-bar">
             <span class="player-rank">${index + 1}.</span>
-            <span class="player-name">${vehicle[0]}</span>
+            <span class="player-name">${esc(vehicle[0])}</span>
             <div class="bar" style="width: ${barWidth}%; background : linear-gradient(to right, #85a728ff, #28a745);">
                 <span class="bar-value">${vehicle[1].toLocaleString()}</span>
             </div>
@@ -131,12 +137,12 @@ let playersHTML = '<div class="stats-section"><h3>Top 10 Players by Record Count
 playersHTML += '<div class="chart-container">';
 
 const maxRecords = Math.max(...sortedPlayers.map(p => p[1]));
-sortedPlayers.forEach((player, index) => {
+    sortedPlayers.forEach((player, index) => {
     const barWidth = (player[1] / maxRecords) * 100;
     playersHTML += `
         <div class="chart-bar">
             <span class="player-rank">${index + 1}.</span>
-            <span class="player-name">${player[0]}</span>
+            <span class="player-name">${esc(player[0])}</span>
             <div class="bar" style="width: ${barWidth}%;">
                 <span class="bar-value">${player[1]}</span>
             </div>
@@ -169,9 +175,9 @@ const countryTotal = countryEntries.reduce((s, e) => s + e[1], 0) || 1;
 
 let pieHTML = '<div class="stats-section"><h3>Records by Country</h3><div class="pie-container">';
 pieHTML += '<canvas id="country-pie" width="500" height="375" aria-label="Pie chart showing records by country"></canvas>';
-pieHTML += '<div class="pie-legend">';
+    pieHTML += '<div class="pie-legend">';
 countryEntries.forEach((entry, idx) => {
-    pieHTML += `<div class="legend-item"><span class="legend-color" data-idx="${idx}"></span><span class="legend-label">${entry[0]} (${entry[1]})</span></div>`;
+    pieHTML += `<div class="legend-item"><span class="legend-color" data-idx="${idx}"></span><span class="legend-label">${esc(entry[0])} (${entry[1]})</span></div>`;
 });
 pieHTML += '</div></div></div>';
 statsContainer.innerHTML += pieHTML;
@@ -230,9 +236,9 @@ const sortedMaps = Object.entries(mapStats)
 
 let mapHTML = '<div class="stats-section"><h3>Map Statistics</h3><table>';
 mapHTML += '<tr><th>Map Name</th><th>Total Records</th><th>Total Distance</th><th>Average Distance</th></tr>';
-sortedMaps.forEach(map => {
+    sortedMaps.forEach(map => {
     const avgDistance = (map[1].distance / map[1].count).toFixed(2);
-    mapHTML += `<tr><td>${map[0]}</td><td>${map[1].count}</td><td>${map[1].distance}</td><td>${avgDistance}</td></tr>`;
+    mapHTML += `<tr><td>${esc(map[0])}</td><td>${map[1].count}</td><td>${map[1].distance}</td><td>${avgDistance}</td></tr>`;
 });
 mapHTML += '</table></div>';
 statsContainer.innerHTML += mapHTML;
@@ -245,12 +251,12 @@ const uniqueVehicles = new Set(data.map(r => r.vehicle_name)).size;
 const uniqueMaps = new Set(data.map(r => r.map_name)).size;
 
 let overallHTML = '<div class="stats-section"><h3>Overall Statistics</h3><div class="overall-stats">';
-overallHTML += `<div class="stat-box"><strong>Total Records:</strong> ${totalRecords}</div>`;
-overallHTML += `<div class="stat-box"><strong>Total Distance:</strong> ${totalDistance}</div>`;
-overallHTML += `<div class="stat-box"><strong>Average Distance:</strong> ${avgDistance}</div>`;
-overallHTML += `<div class="stat-box"><strong>Unique Players:</strong> ${uniquePlayers}</div>`;
-overallHTML += `<div class="stat-box"><strong>Unique Vehicles:</strong> ${uniqueVehicles}</div>`;
-overallHTML += `<div class="stat-box"><strong>Unique Maps:</strong> ${uniqueMaps}</div>`;
+overallHTML += `<div class="stat-box"><strong>Total Records:</strong> ${esc(totalRecords)}</div>`;
+overallHTML += `<div class="stat-box"><strong>Total Distance:</strong> ${esc(totalDistance)}</div>`;
+overallHTML += `<div class="stat-box"><strong>Average Distance:</strong> ${esc(avgDistance)}</div>`;
+overallHTML += `<div class="stat-box"><strong>Unique Players:</strong> ${esc(uniquePlayers)}</div>`;
+overallHTML += `<div class="stat-box"><strong>Unique Vehicles:</strong> ${esc(uniqueVehicles)}</div>`;
+overallHTML += `<div class="stat-box"><strong>Unique Maps:</strong> ${esc(uniqueMaps)}</div>`;
 overallHTML += '</div></div>';
 statsContainer.innerHTML += overallHTML;
 }
@@ -262,7 +268,7 @@ const tableContainer = document.getElementById('vehicle-stats-table');
 let html = '<table>';
 
 if (sortType === 'total-distance') {
-    // Sort by Total Distance
+    
     const vehicleStats = {};
     data.forEach(record => {
         if (!vehicleStats[record.vehicle_name]) {
@@ -279,7 +285,7 @@ if (sortType === 'total-distance') {
     });
 
 } else if (sortType === 'longest-distance') {
-    // Sort by Longest Distance with Map name
+    
     const vehicleLongest = {};
     data.forEach(record => {
         if (!vehicleLongest[record.vehicle_name]) {
@@ -299,10 +305,10 @@ if (sortType === 'total-distance') {
     });
 
 } else if (sortType === 'avg-placement') {
-    // Sort by Average Placement (ascending)
+    
     const vehiclePlacements = {};
     
-    // Group records by map
+    
     const mapData = {};
     data.forEach(record => {
         if (!mapData[record.map_name]) {
@@ -311,10 +317,10 @@ if (sortType === 'total-distance') {
         mapData[record.map_name].push(record);
     });
 
-    // Calculate placement for each vehicle on each map
+    
     Object.keys(mapData).forEach(mapName => {
         const mapRecords = mapData[mapName];
-        // Sort by distance descending to get placements
+        
         mapRecords.sort((a, b) => b.distance - a.distance);
         
         mapRecords.forEach((record, placement) => {
@@ -326,7 +332,7 @@ if (sortType === 'total-distance') {
         });
     });
 
-    // Calculate average placement
+    
     Object.keys(vehiclePlacements).forEach(vehicleName => {
         const data = vehiclePlacements[vehicleName];
         data.avgPlacement = data.totalPlacement / data.placements.length;
@@ -341,7 +347,7 @@ if (sortType === 'total-distance') {
     });
 
 } else if (sortType === 'highest-placement') {
-    // Sort by Highest Placement (1st place across all maps)
+    
     const vehicleHighest = {};
     
     const mapData = {};
@@ -352,7 +358,7 @@ if (sortType === 'total-distance') {
         mapData[record.map_name].push(record);
     });
 
-    // Find highest placement for each vehicle
+    
     Object.keys(mapData).forEach(mapName => {
         const mapRecords = mapData[mapName];
         mapRecords.sort((a, b) => b.distance - a.distance);
@@ -382,7 +388,7 @@ if (sortType === 'total-distance') {
     });
 
 } else if (sortType === 'lowest-placement') {
-    // Sort by Lowest Placement (worst place across all maps)
+    
     const vehicleLowest = {};
     
     const mapData = {};
@@ -393,7 +399,7 @@ if (sortType === 'total-distance') {
         mapData[record.map_name].push(record);
     });
 
-    // Find lowest placement for each vehicle
+    
     Object.keys(mapData).forEach(mapName => {
         const mapRecords = mapData[mapName];
         mapRecords.sort((a, b) => b.distance - a.distance);
@@ -466,7 +472,7 @@ function downloadCSV(dataArray) {
     const timestamp = new Date().toISOString().split('T')[0];
     const filename = `HCR2_Records_${timestamp}.csv`;
 
-    if (navigator.msSaveBlob) { // IE10+
+    if (navigator.msSaveBlob) {
         navigator.msSaveBlob(blob, filename);
     } else {
         const link = document.createElement('a');
@@ -504,7 +510,7 @@ if (dataType === 'records') {
     if (filterContainer) filterContainer.style.display = 'none'; 
 }
 
-fetch('load_data.php?type=' + dataType)
+    fetch('php/load_data.php?type=' + dataType)
     .then(response => response.json())
     .then(data => {
         if (data.error) {
@@ -522,19 +528,21 @@ fetch('load_data.php?type=' + dataType)
 }
 
 function fetchSummary() {
-fetch('load_data.php?type=records')
+fetch('php/load_data.php?type=records')
     .then(response => response.json())
     .then(data => {
         if (data.error) {
             console.error('Error:', data.error);
-            document.getElementById('summary-container').innerHTML = '<p style="color:red;">' + data.error + '</p>';
+            const sc = document.getElementById('summary-container');
+            if (sc) sc.innerHTML = '<p style="color:red;">' + esc(data.error) + '</p>';
         } else {
             displaySummary(data);
         }
     })
     .catch(error => {
         console.error('Fetch error:', error);
-        document.getElementById('summary-container').innerHTML = '<p style="color:red;">Error fetching summary data from server.</p>';
+        const sc = document.getElementById('summary-container');
+        if (sc) sc.innerHTML = '<p style="color:red;">Error fetching summary data from server.</p>';
     });
 }
 
@@ -552,14 +560,14 @@ data.forEach(record => {
 });
 
 
-const bestPlayer = Object.keys(playerRecords).reduce((a, b) => playerRecords[a] > playerRecords[b] ? a : b);
-const bestVehicle = Object.keys(vehicleDistances).reduce((a, b) => vehicleDistances[a] > vehicleDistances[b] ? a : b);
+    const bestPlayer = Object.keys(playerRecords).reduce((a, b) => playerRecords[a] > playerRecords[b] ? a : b);
+    const bestVehicle = Object.keys(vehicleDistances).reduce((a, b) => vehicleDistances[a] > vehicleDistances[b] ? a : b);
 
-summaryContainer.innerHTML = `
+    summaryContainer.innerHTML = `
     <h2>Summary 📝</h2>
     <div class="summary-box">
-        <p><strong>Best Player:</strong> ${bestPlayer} (${playerRecords[bestPlayer]} records)</p>
-        <p><strong>Best Vehicle:</strong> ${bestVehicle} (${vehicleDistances[bestVehicle]} total distance)</p>
+        <p><strong>Best Player:</strong> ${esc(bestPlayer)} (${playerRecords[bestPlayer]} records)</p>
+        <p><strong>Best Vehicle:</strong> ${esc(bestVehicle)} (${vehicleDistances[bestVehicle]} total distance)</p>
     </div>
 `;
 }
@@ -634,11 +642,11 @@ if (dataType === 'maps') {
     tableHTML += '<tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr>';
     records.forEach(item => {
         tableHTML += `<tr>
-                        <td>${item.distance}</td>
-                        <td>${item.map_name}</td>
-                        <td>${item.vehicle_name}</td>
-                        <td>${item.player_name}</td>
-                        <td>${item.player_country}</td>
+                        <td>${esc(item.distance)}</td>
+                        <td>${esc(item.map_name)}</td>
+                        <td>${esc(item.vehicle_name)}</td>
+                        <td>${esc(item.player_name)}</td>
+                        <td>${esc(item.player_country)}</td>
                         </tr>`;
     });
 }
@@ -655,7 +663,7 @@ const searchHTML = `
     <button id="export-btn" onclick="exportToCSV()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background-color: #28a745; color: white; cursor: pointer; font-size: 14px; margin-left: 8px;">📥 Export CSV</button>
         <select id="map-filter" onchange="filterRecords()">
             <option value="">Filter by Map</option>
-            ${[...new Set(allData.map(record => record.map_name))].map(map => `<option value="${map}">${map}</option>`).join('')}
+            ${[...new Set(allData.map(record => record.map_name))].map(map => `<option value="${esc(map)}">${esc(map)}</option>`).join('')}
         </select>
         <select id="sort-select" onchange="filterRecords()" title="Sort records">
             <option value="default">Default: Map / Vehicle Alphabetically</option>
@@ -664,7 +672,7 @@ const searchHTML = `
         </select>
         <select id="vehicle-filter" onchange="filterRecords()">
             <option value="">Filter by Vehicle</option>
-            ${[...new Set(allData.map(record => record.vehicle_name))].map(vehicle => `<option value="${vehicle}">${vehicle}</option>`).join('')}
+            ${[...new Set(allData.map(record => record.vehicle_name))].map(vehicle => `<option value="${esc(vehicle)}">${esc(vehicle)}</option>`).join('')}
         </select>
     </div>
 `;
@@ -693,8 +701,8 @@ displayData(filteredData, currentDataType);
 
 async function checkAuthAndInit() {
 try {
-    const res = await fetch('auth/status.php', { cache: 'no-cache', credentials: 'same-origin' });
-    const status = await res.json();
+    const res = await fetchWithTimeout('auth/status.php', { cache: 'no-cache', credentials: 'same-origin' }, 2500);
+    const status = res ? await res.json().catch(()=>({ logged: false })) : { logged: false };
     const loginBtn = document.getElementById('login-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const adminBtn = document.getElementById('admin-btn');
@@ -728,9 +736,196 @@ try {
 }
 
 window.onload = () => {
-fetchSummary();
-checkAuthAndInit();
+    checkAuthAndInit();
 };
+
+ 
+async function initGithubVersion() {
+    const repo = 'Nipatsuplayer/hcr2-database-with-website';
+    const versionEl = document.getElementById('github-version');
+    const linkEl = document.getElementById('github-link');
+    if (!versionEl || !linkEl) return;
+
+    try {
+        let res = await fetchWithTimeout(`https://api.github.com/repos/${repo}/releases/latest`, { }, 3000).catch(()=>null);
+        if (res && res.ok) {
+            const data = await res.json().catch(()=>null);
+            if (data && data.tag_name) {
+                versionEl.textContent = esc(data.tag_name);
+                linkEl.href = data.html_url || `https://github.com/${repo}/releases`;
+                linkEl.title = 'View release on GitHub';
+                return;
+            }
+        }
+
+        res = await fetchWithTimeout(`https://api.github.com/repos/${repo}/commits`, {}, 3000).catch(()=>null);
+        if (res && res.ok) {
+            const commits = await res.json().catch(()=>null);
+            if (Array.isArray(commits) && commits.length > 0) {
+                const sha = commits[0].sha ? commits[0].sha.substring(0, 7) : commits[0].sha;
+                versionEl.textContent = esc(sha || 'unknown');
+                linkEl.href = commits[0].html_url || `https://github.com/${repo}`;
+                linkEl.title = 'View commit on GitHub';
+                return;
+            }
+        }
+    } catch (err) {
+        console.error('Failed to fetch GitHub version:', err);
+    }
+
+    versionEl.textContent = 'unknown';
+    linkEl.href = `https://github.com/${repo}`;
+}
+
+window.addEventListener('load', () => {
+    try { initGithubVersion(); } catch (e) { console.error(e); }
+});
+
+window.addEventListener('error', function (evt) {
+    console.error('Global error:', evt.message, evt.filename + ':' + evt.lineno);
+});
+window.addEventListener('unhandledrejection', function (evt) {
+    console.error('Unhandled promise rejection:', evt.reason);
+});
+
+ 
+function publicSubmitOverlayClick(e) {
+    const overlay = document.getElementById('public-submit-overlay');
+    const panel = document.querySelector('.modal-panel');
+    if (!overlay || !panel) return;
+    if (e.target === overlay) {
+        togglePublicSubmitForm();
+    }
+}
+
+function publicSubmitKeyHandler(e) {
+    if (e.key === 'Escape') togglePublicSubmitForm();
+}
+
+function togglePublicSubmitForm() {
+    const overlay = document.getElementById('public-submit-overlay');
+    if (!overlay) return;
+    const isOpen = overlay.style.display === 'block';
+    if (isOpen) {
+        overlay.style.display = 'none';
+        document.removeEventListener('keydown', publicSubmitKeyHandler);
+        overlay.removeEventListener('click', publicSubmitOverlayClick);
+    } else {
+        overlay.style.display = 'block';
+        populatePublicSubmitOptions();
+        document.addEventListener('keydown', publicSubmitKeyHandler);
+        overlay.addEventListener('click', publicSubmitOverlayClick);
+        
+        setTimeout(() => {
+            const first = document.getElementById('public-map-select');
+            if (first) first.focus();
+        }, 50);
+    }
+}
+
+function toggleNewsModal() {
+    const overlay = document.getElementById('news-overlay');
+    if (!overlay) return;
+    const isOpen = overlay.style.display === 'block';
+    if (isOpen) {
+        overlay.style.display = 'none';
+    } else {
+        overlay.style.display = 'block';
+        loadNews();
+    }
+}
+
+async function loadNews() {
+    const el = document.getElementById('news-list');
+    if (!el) return;
+    el.innerHTML = '<p>Loading news...</p>';
+    try {
+        const res = await fetch('php/get_news.php', { cache: 'no-cache' });
+        const data = await res.json();
+        if (data.error) {
+            el.innerHTML = '<p style="color:red;">' + esc(data.error) + '</p>';
+            return;
+        }
+        const items = Array.isArray(data.news) ? data.news : [];
+        if (items.length === 0) {
+            el.innerHTML = '<p>No news available.</p>';
+            return;
+        }
+        const html = items.map(n => {
+            const created = n.created_at ? n.created_at : '';
+            const title = esc(n.title || '');
+            const content = esc(n.content || '');
+            const author = esc(n.author || '');
+            return `<div class="news-item" style="padding:12px; border-bottom:1px solid #eee;"><h3 style=\"margin:0 0 6px 0;\">${title}</h3><div style=\"font-size:13px;color:#666;margin-bottom:8px;\">${created} — ${author}</div><div style=\"white-space:pre-wrap;\">${content}</div></div>`;
+        }).join('');
+        el.innerHTML = html;
+    } catch (err) {
+        console.error('Failed to load news', err);
+        el.innerHTML = '<p style="color:red;">Failed to load news.</p>';
+    }
+}
+
+async function populatePublicSubmitOptions() {
+    try {
+        const mapsRes = await fetch('php/load_data.php?type=maps');
+        const maps = await mapsRes.json();
+        const mapSel = document.getElementById('public-map-select');
+        if (mapSel && Array.isArray(maps)) {
+            mapSel.innerHTML = '<option value="">Select a Map</option>' + maps.map(m => `<option value="${esc(m.idMap)}">${esc(m.nameMap)}</option>`).join('');
+        }
+
+        const vehiclesRes = await fetch('php/load_data.php?type=vehicles');
+        const vehicles = await vehiclesRes.json();
+        const vehicleSel = document.getElementById('public-vehicle-select');
+        if (vehicleSel && Array.isArray(vehicles)) {
+            vehicleSel.innerHTML = '<option value="">Select a Vehicle</option>' + vehicles.map(v => `<option value="${esc(v.idVehicle)}">${esc(v.nameVehicle)}</option>`).join('');
+        }
+    } catch (err) {
+        console.error('Failed to load maps/vehicles for public submit', err);
+    }
+}
+
+async function submitPublicRecord(e) {
+    e.preventDefault();
+    const mapId = document.getElementById('public-map-select').value;
+    const vehicleId = document.getElementById('public-vehicle-select').value;
+    const distance = document.getElementById('public-distance-input').value;
+    const playerName = document.getElementById('public-player-name').value.trim();
+    const playerCountry = document.getElementById('public-player-country').value.trim();
+    const msgEl = document.getElementById('public-submit-message');
+
+    if (!mapId || !vehicleId || !distance || !playerName) {
+        if (msgEl) { msgEl.textContent = 'Please complete all required fields.'; msgEl.style.color = 'red'; }
+        return;
+    }
+    if (isNaN(Number(distance)) || Number(distance) <= 0) {
+        if (msgEl) { msgEl.textContent = 'Distance must be a positive number.'; msgEl.style.color = 'red'; }
+        return;
+    }
+
+    try {
+        const hp = document.getElementById('hp_email') ? document.getElementById('hp_email').value.trim() : '';
+        const res = await fetch('php/public_submit.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mapId, vehicleId, distance: Number(distance), playerName, playerCountry, hp_email: hp })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            if (msgEl) { msgEl.textContent = data.error || 'Submission failed'; msgEl.style.color = 'red'; }
+            return;
+        }
+        if (data.success) {
+            if (msgEl) { msgEl.textContent = data.message || 'Submitted'; msgEl.style.color = 'green'; }
+            document.getElementById('public-submit-form').reset();
+        } else {
+            if (msgEl) { msgEl.textContent = data.error || 'Submission failed'; msgEl.style.color = 'red'; }
+        }
+    } catch (err) {
+        console.error('Public submit failed', err);
+        if (msgEl) { msgEl.textContent = 'Submission failed (network error).'; msgEl.style.color = 'red'; }
+    }
+}
 
 function submitRecord(event) {
 event.preventDefault();
@@ -773,7 +968,7 @@ const formData = hasPlayerId ? {
     country
 };
 
-fetch('submit_record.php', {
+fetch('php/submit_record.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'same-origin',
@@ -803,7 +998,7 @@ fetch('submit_record.php', {
         populateDeleteOptions();
         populateFormOptions();
         
-        // Garder le message visible pendant 5 secondes
+        
         setTimeout(() => {
             msgEl.textContent = '';
         }, 5000);
@@ -819,7 +1014,7 @@ fetch('submit_record.php', {
 }
 
 function populateDeleteOptions() {
-fetch('load_data.php?type=records')
+fetch('php/load_data.php?type=records')
     .then(response => response.json())
     .then(data => {
         const recordSelect = document.getElementById('record-select');
@@ -844,7 +1039,7 @@ if (!recordId) {
     return;
 }
 
-fetch('delete_record.php', {
+fetch('php/delete_record.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'same-origin',
@@ -874,7 +1069,7 @@ fetch('delete_record.php', {
 }
 
 function exportToCSV() {
-    // Default export: CSV
+    
     const searchQuery = (document.getElementById('search-bar')?.value || '').toLowerCase();
     const mapFilter = (document.getElementById('map-filter')?.value) || '';
     const vehicleFilter = (document.getElementById('vehicle-filter')?.value) || '';
