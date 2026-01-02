@@ -1,407 +1,352 @@
+/* ================= RESET ================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+input,
+select,
+textarea,
+button {
+  width: 100%;
+  box-sizing: border-box;
+}
 
 body {
-font-family: Arial, sans-serif;
-margin: 0;
-padding: 0;
-background-color: #f4f4f9;
-display: flex;
-flex-direction: column;
-min-height: 100vh;
-color: #333;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  color: #333;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
+
+/* ================= HEADER ================= */
+
 header {
-position: relative;
-background: linear-gradient(90deg, #007bff, #0056b3);
-color: white;
-padding: 16px 20px;
-overflow: visible;
-min-height: 64px;
+  width: 100%;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  color: #fff;
+  position: relative;
 }
 
+/* Inner container (centers content) */
 .header-inner {
-display: grid;
-grid-template-columns: auto 1fr auto;
-align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
+/* Branding */
 .branding {
-display: flex;
-align-items: center;
-gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
+
 .branding img {
-height: 100px;
-width: auto;
+  height: 56px;
+  width: auto;
+}
+
+.branding h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.branding div > div {
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* ================= MOBILE MENU BUTTON ================= */
+
+.mobile-menu-btn {
+  display: none;
+  margin-left: auto;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* ================= NAV / BUTTONS ================= */
+
+.header-right {
+  margin-left: auto;
 }
 
 .header-buttons {
-display: flex;
-justify-self: end;
-gap: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
 }
-.header-right {
-display: flex;
-align-items: center;
-gap: 10px;
-justify-self: end;
-}
+
+/* Normal buttons */
 .header-buttons button {
-background: #ffffffcc;
-color: #003b70;
-border: 1px solid rgba(0,0,0,0.08);
-padding: 8px 12px;
-border-radius: 6px;
-font-weight: 600;
-cursor: pointer;
-font-size: 13px;
-display: inline-flex;
-align-items: center;
-gap: 8px;
+  background: #fff;
+  color: #003b70;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
 }
-.header-buttons button:hover { filter: brightness(0.95); }
 
+.header-buttons button:hover {
+  filter: brightness(0.95);
+}
+
+/* Discord button */
 .discord-btn {
-background: #5865F2;
-color: #fff;
-border: none;
-padding: 8px 12px;
-border-radius: 8px;
-font-weight: 700;
-font-size: 13px;
-display: inline-flex;
-align-items: center;
-gap: 8px;
-}
-.discord-btn img.discord-logo {
-width: 18px;
-height: 18px;
-display: inline-block;
+  background: #5865F2 !important;
+  color: #fff !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
 }
 
-
-#admin-btn, #logout-btn {
-background: transparent;
-color: #fff;
-border: 1px solid rgba(255,255,255,0.15);
-padding: 6px 10px;
-border-radius: 6px;
-cursor: pointer;
-font-weight: 600;
+.discord-logo {
+  width: 18px;
+  height: 18px;
 }
+
+/* ================= AUTH WARNING ================= */
+
+#auth-warning {
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ================= MAIN ================= */
 
 main {
-padding: 20px;
-text-align: center;
-flex: 1;
+  flex: 1;
+  padding: 20px;
+  text-align: center;
 }
-h2 {
-text-align: center;
-margin-top: 20px;
-}
-.summary-box {
-background: linear-gradient(90deg, #ffeb3b, #f4a107);
-padding: 20px;
-margin: 20px auto;
-width: 80%;
-border-radius: 10px;
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-font-size: 18px;
-}
-.filter-container {
-display: flex;
-justify-content: center;
-gap: 10px;
-margin: 20px 0;
-}
-#search-bar, select {
-padding: 10px;
-font-size: 16px;
-border: 1px solid #ccc;
-border-radius: 5px;
-}
-table {
-border-collapse: collapse;
-width: 90%;
-margin: 20px auto;
-background-color: #fff;
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-th, td {
-border: 1px solid #ddd;
-padding: 10px;
-text-align: left;
-}
-th {
-background-color: #f2f2f2;
-}
-tr:nth-child(even) {
-background-color: #f9f9f9;
-}
-tr:hover {
-background-color: #f1f1f1;
-}
-.form-container {
-background-color: #f9f9f9;
-padding: 20px;
-margin: 20px auto;
-width: 80%;
-border-radius: 10px;
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-.form-container h2 {
-margin-bottom: 15px;
-}
-.form-container label {
-font-weight: bold;
-}
-.form-container input, .form-container select, .form-container button {
-width: 100%;
-padding: 10px;
-margin: 10px 0;
-font-size: 16px;
-border: 1px solid #ccc;
-border-radius: 5px;
-}
-.form-container button {
-background-color: #007bff;
-color: white;
-border: none;
-cursor: pointer;
-}
-.form-container button:hover {
-background-color: linear-gradient(90deg, #007bff, #0056b3);
-}
-#data-container {
-display: none; 
-}
-#stats-container {
-display: none;
-}
-.stats-section {
-margin: 30px auto;
-padding: 20px;
-background-color: #fff;
-border-radius: 10px;
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-width: 90%;
-}
-.stats-section h3 {
-color: #007bff;
-margin-top: 0;
-}
-.chart-container {
-display: flex;
-flex-direction: column;
-gap: 15px;
-}
-    .pie-container {
-        display: flex;
-        gap: 20px;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-    .pie-legend {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        max-width: 300px;
-        text-align: left;
-    }
-    .legend-item {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        font-size: 14px;
-    }
-    .legend-color {
-        width: 18px;
-        height: 18px;
-        border-radius: 3px;
-        display: inline-block;
-    }
-.chart-bar {
-display: grid;
-grid-template-columns: 35px 140px 1fr;
-gap: 10px;
-align-items: center;
-width: 100%;
-}
-.player-rank {
-font-weight: bold;
-text-align: right;
-}
-.player-name {
-text-align: right;
-font-weight: 500;
-overflow: hidden;
-text-overflow: ellipsis;
-white-space: nowrap;
-}
-.bar {
-height: 30px;
-background: linear-gradient(90deg, #007bff, #0056b3);
-border-radius: 5px;
-display: flex;
-align-items: center;
-justify-content: flex-end;
-padding-right: 10px;
-min-width: 50px;
-}
-.bar-value {
-color: white;
-font-weight: bold;
-font-size: 14px;
-}
-.overall-stats {
-display: grid;
-grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-gap: 15px;
-}
-.stat-box {
-background: linear-gradient(135deg, #007bff, #0056b3);
-color: white;
-padding: 20px;
-border-radius: 8px;
-text-align: center;
-font-size: 16px;
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-.stat-box strong {
-display: block;
-font-size: 14px;
-opacity: 0.9;
-}
+
+/* ================= ABOUT SECTION ================= */
+
 .about-section {
-background-color: #fff;
-padding: 20px;
-margin: 40px auto;
-width: 80%;
-border-radius: 10px;
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-#footer {
-    margin-top: 40px;
-    padding: 20px;
-    background : linear-gradient(90deg, #abc2c9, #c7d3d5);
-    font-size: 14px;
-    color: #555;
-    text-align: center;
+  background: #fff;
+  padding: 20px;
+  margin: 40px auto;
+  width: 80%;
+  max-width: 1000px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-#footer .github-meta {
-    margin-top: 8px;
-    font-size: 13px;
-    color: #444;
-}
-#footer .github-meta a {
-    color: #003b70;
-    text-decoration: none;
-    font-weight: 600;
-}
-#footer .github-meta a:hover {
-    text-decoration: underline;
+/* ================= TABLES (RESPONSIVE) ================= */
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-header { position: relative; } 
-.login-container {
-position: absolute;
-top: 10px;
-right: 14px;
-z-index: 20;
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 720px; /* prevents columns squishing */
+  margin: 20px 0;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.discord-btn {
-display: inline-flex;
-align-items: center;
-justify-content: center;
-background: #5865F2;
-color: #fff;
-border: none;
-height: 34px;
-min-width: 34px;
-padding: 4px 10px;
-border-radius: 8px;
-cursor: pointer;
-font-weight: 600;
-font-size: 13px;
-line-height: 1;
-overflow: visible;
+th, td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  white-space: nowrap;
 }
-.discord-btn span {
-    display: inline-block;
-    transform: translateY(-5px);
+
+th {
+  background: #f2f2f2;
 }
-.discord-logo {
-width: 18px;
-height: 18px;
-display: inline-block;
-flex: 0 0 18px;
+
+tr:nth-child(even) {
+  background: #f9f9f9;
 }
-.discord-btn:hover { filter: brightness(0.95); }
-.social-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    margin: 8px 0;
-}
-.social-link a {
-    color: #007bff;
-    text-decoration: none;
-}
-.social-link a:hover {
-    text-decoration: underline;
-    color: #0056b3;
-}
+
+
+/* ================= MODALS (MOBILE SAFE) ================= */
 
 .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    padding: 20px;
-}
-.modal-panel {
-    max-width: 720px;
-    width: 100%;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    padding: 20px;
-    position: relative;
-}
-.modal-panel .modal-close {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    border: none;
-    background: transparent;
-    font-size: 18px;
-    cursor: pointer;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
-@media (max-width: 640px) {
-    .vehicle-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
+.modal-panel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  width: 92vw;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close {
+  position: sticky;
+  top: 0;
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* ================= FOOTER ================= */
+
+#footer {
+  margin-top: 40px;
+  padding: 20px;
+  background: linear-gradient(90deg, #abc2c9, #c7d3d5);
+  text-align: center;
+  font-size: 14px;
+  color: #555;
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+
+  .header-inner {
+    flex-wrap: wrap;
+  }
+
+  .branding img {
+    height: 40px;
+  }
+
+  .branding h1 {
+    font-size: 16px;
+  }
+
+  /* Show hamburger */
+  .mobile-menu-btn {
+    display: block;
+  }
+
+  /* Mobile dropdown menu */
+  #mobile-menu {
+    position: absolute;
+    top: 100%;
+    left: 8px;
+    right: 8px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    padding: 12px;
+    z-index: 1000;
+  }
+
+  #mobile-menu[aria-hidden="true"] {
+    display: none;
+  }
+
+  .header-buttons {
+    flex-direction: column;
+  }
+
+  .header-buttons button,
+  .discord-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  .about-section {
+    width: 95%;
+  }
+}
+
+/* === STATS BAR CHART FIX === */
+
+.chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.chart-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    font-size: 14px;
+}
+
+.player-rank {
+    width: 28px;
+    text-align: right;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.player-name {
+    width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+}
+
+.bar {
+    position: relative;
+    height: 22px;
+    min-width: 40px;
+    background: linear-gradient(to right, #85a728ff, #28a745);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding-right: 8px;
+}
+
+.bar-value {
+    position: absolute;
+    right: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* MOBILE FIX */
+@media (max-width: 600px) {
+    .player-name {
+        width: 90px;
     }
-    .vehicle-header .vehicle-title {
-        position: static !important;
-        transform: none !important;
-        text-align: center;
-        margin: 0;
-    }
-    .vehicle-header .vehicle-select-wrap {
-        display: flex;
-        justify-content: center;
-    }
-    #vehicle-sort-select {
-        width: 100%;
-        max-width: 360px;
+
+    .bar {
+        height: 20px;
     }
 }

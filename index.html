@@ -9,14 +9,11 @@
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
     <link rel="manifest" href="img/site.webmanifest">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    
 
 </head>
 <body>
     <header>
-        <div class="header-inner"></div>
+        <div class="header-inner">
             <div class="branding">
                 <img src="img/image.png" alt="HCR2 Logo" id="logo">
                 <div>
@@ -25,7 +22,14 @@
                 </div>
             </div>
 
-            <div class="header-right">
+            <!-- Mobile menu toggle button (visible on small screens) -->
+            <button id="mobile-menu-btn" class="mobile-menu-btn" aria-expanded="false" aria-controls="mobile-menu" onclick="toggleMobileMenu()">
+                <span class="sr-only">Open menu</span>
+                ☰
+            </button>
+
+            <!-- header-right is now the togglable mobile menu -->
+            <nav id="mobile-menu" class="header-right" aria-hidden="true">
                 <div class="header-buttons" aria-hidden="false">
                     <button onclick="fetchData('maps')">Get Maps</button>
                     <button onclick="fetchData('vehicles')">Get Vehicles</button>
@@ -35,16 +39,18 @@
                     <button onclick="togglePublicSubmitForm()">Submit Record</button>
                     <button onclick="toggleNewsModal()">News</button>
 
-                <button id="login-btn" class="discord-btn" onclick="location.href='auth/discord_login.php'">
-                    <img class="discord-logo" src="img/Discord-Symbol-Blurple.png" alt="Discord">
-                    <span>Sign in with Discord</span>
-                </button>
+                    <button id="login-btn" class="discord-btn" onclick="location.href='auth/discord_login.php'">
+                        <img class="discord-logo" src="img/Discord-Symbol-Blurple.png" alt="Discord">
+                        <span>Sign in with Discord</span>
+                    </button>
 
-                <button id="admin-btn" style="display:none;">Admin</button>
-                <button id="logout-btn" onclick="location.href='auth/logout.php'" style="display:none;">Logout</button>
-            </div>
+                    <button id="admin-btn" style="display:none;">Admin</button>
+                    <button id="logout-btn" onclick="location.href='auth/logout.php'" style="display:none;">Logout</button>
+                </div>
+            </nav>
+        </div>
 
-            <div id="auth-warning" style="color:orange; padding:8px 0; text-align:center;"></div>
+        <div id="auth-warning" style="color:orange; padding:8px 0; text-align:center;"></div>
     </header>
 
     <main>
