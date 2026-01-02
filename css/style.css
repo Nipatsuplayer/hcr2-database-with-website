@@ -48,6 +48,9 @@ header {
   gap: 16px;
 }
 
+
+/* ================= BRANDING ================= */
+
 /* Branding */
 .branding {
   display: flex;
@@ -62,8 +65,22 @@ header {
 
 .branding h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 24px;
   line-height: 1.2;
+}
+
+@media (min-width: 769px) {
+  .branding img {
+    height: 72px;
+  }
+
+  .branding h1 {
+    font-size: 28px;
+  }
+
+  .branding div > div {
+    font-size: 18px;
+  }
 }
 
 .branding div > div {
@@ -91,11 +108,47 @@ header {
   margin-left: auto;
 }
 
+/* Desktop: pin header buttons to the very right and align them to the bottom of the header */
+@media (min-width: 769px) {
+  header {
+    position: relative;
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 16px 36px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  /* Move the buttons outside the centered container to the far right of the viewport */
+  .header-right {
+    position: absolute;
+    right: 16px;
+    bottom: 12px;
+    margin-left: 0;
+  }
+
+  /* ensure the header buttons align to the bottom visually */
+  .header-buttons, .discord-btn {
+    align-items: center;
+  }
+}
+
 .header-buttons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: right;
+}
+
+@media (min-width: 769px) {
+  .header-buttons {
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
 }
 
 /* Normal buttons */
@@ -115,6 +168,13 @@ header {
   filter: brightness(0.95);
 }
 
+@media (min-width: 769px) {
+  .header-buttons button {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}
+
 /* Discord button */
 .discord-btn {
   background: #5865F2 !important;
@@ -125,9 +185,38 @@ header {
   font-weight: 700;
 }
 
+.discord-btn:hover {
+  filter: brightness(0.9);
+}
+
 .discord-logo {
   width: 18px;
   height: 18px;
+  display: inline-block;
+}
+
+@media (min-width: 769px) {
+  /* Desktop: ensure header buttons and discord button don't expand to full width */
+  .header-buttons button,
+  .header-buttons .discord-btn,
+  .discord-btn {
+    width: auto;
+  }
+
+  /* Make discord button match other buttons size-wise on desktop */
+  .discord-btn {
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+  }
+
+  .discord-logo {
+    width: 10px;
+    height: 10px;
+    filter : brightness(0), invert(1) !important;
+    /*make logo white*/
+    vertical-align: middle;
+
+  }
 }
 
 /* ================= AUTH WARNING ================= */
@@ -168,7 +257,6 @@ main {
 table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 720px; /* prevents columns squishing */
   margin: 20px 0;
   background: #fff;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -177,7 +265,16 @@ table {
 th, td {
   border: 1px solid #ddd;
   padding: 10px;
-  white-space: nowrap;
+}
+
+@media (min-width: 769px) {
+  table {
+    min-width: 720px;
+  }
+
+  th, td {
+    white-space: nowrap;
+  }
 }
 
 th {
@@ -198,6 +295,7 @@ tr:nth-child(even) {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px; /* keep some spacing on small viewports */
   z-index: 9999;
 }
 
@@ -206,8 +304,9 @@ tr:nth-child(even) {
   border-radius: 12px;
   padding: 16px;
   width: 92vw;
-  max-width: 520px;
-  max-height: 90vh;
+  max-width: 720px;
+  margin: auto;
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
   position: relative;
 }
@@ -282,8 +381,43 @@ tr:nth-child(even) {
     font-size: 15px;
   }
 
+  /* Mobile: ensure discord icon is visible and properly sized */
+  .discord-logo {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    vertical-align: middle;
+    object-fit: contain;
+  }
+
   .about-section {
     width: 95%;
+  }
+}
+
+/* === FILTER CONTAINER === */
+
+.filter-container {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+@media (min-width: 769px) {
+  .filter-container {
+    justify-content: center;
+    flex-wrap: nowrap;
+    max-width: 1200px;
+    margin: 20px auto;
+  }
+
+  .filter-container input,
+  .filter-container select,
+  .filter-container button {
+    width: auto;
+    min-width: 150px;
   }
 }
 
@@ -350,3 +484,11 @@ tr:nth-child(even) {
         height: 20px;
     }
 }
+
+/* Ensure Discord PNG/SVG renders as white across breakpoints */
+.discord-logo {
+  -webkit-filter: brightness(0) invert(1) !important;
+  filter: brightness(0) invert(1) !important;
+  object-fit: contain;
+}
+
