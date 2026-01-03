@@ -657,6 +657,7 @@ tr:nth-child(even) {
 /* Slightly tighter table styles for stats tables */
 .stats-section table th, .stats-section table td {
   padding: 8px 10px;
+  text-wrap: wrap;
 }
 
 @media (max-width: 600px) {
