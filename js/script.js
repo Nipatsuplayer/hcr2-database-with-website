@@ -103,7 +103,8 @@ let totalStars = 0;
 sortedVehiclesByStars.forEach(v => { totalStars += v[1]; });
 
 let starsHTML = '<div class="stats-section"><h3>Vehicle Rankings by Adventure Stars</h3>';
-starsHTML += '<div class="chart-container">';
+// add stars-chart so green bars use the flexible bar structure
+starsHTML += '<div class="chart-container stars-chart">';
 
 const maxStars = Math.max(...sortedVehiclesByStars.map(v => v[1]));
 sortedVehiclesByStars.forEach((vehicle, index) => {
@@ -112,8 +113,10 @@ sortedVehiclesByStars.forEach((vehicle, index) => {
         <div class="chart-bar">
             <span class="player-rank">${index + 1}.</span>
             <span class="player-name">${esc(vehicle[0])}</span>
-            <div class="bar" style="width: ${barWidth}%; background : linear-gradient(to right, #85a728ff, #28a745);">
-                <span class="bar-value">${vehicle[1].toLocaleString()}</span>
+            <div class="bar-wrap">
+                <div class="bar-fill" style="width: ${barWidth}%; background: linear-gradient(to right, #85a728ff, #28a745);">
+                    <span class="bar-value">${vehicle[1].toLocaleString()}</span>
+                </div>
             </div>
         </div>
     `;
@@ -123,6 +126,15 @@ starsHTML += `<div class="total-stars"> ⭐ Total Adventure Stars : </div>`;
 starsHTML += `<div class="total-stars-value">${totalStars.toLocaleString()}</div>`;
 starsHTML += '</div></div>';
 statsContainer.innerHTML += starsHTML;
+
+// explicitly set star bar fills to ensure accurate rendering on mobile browsers
+try {
+    const starFills = statsContainer.querySelectorAll('.stars-chart .bar-fill');
+    (starFills || []).forEach((el, i) => {
+        const pct = (sortedVehiclesByStars[i] && sortedVehiclesByStars[i][1]) ? (sortedVehiclesByStars[i][1] / maxStars) * 100 : 0;
+        el.style.width = pct.toFixed(2) + '%';
+    });
+} catch (e) {}
 
 const playerRecords = {};
 data.forEach(record => {
@@ -134,17 +146,20 @@ const sortedPlayers = Object.entries(playerRecords)
     .slice(0, 10);
 
 let playersHTML = '<div class="stats-section"><h3>Top 10 Players by Record Count</h3>';
-playersHTML += '<div class="chart-container">';
+// add a modifier class so player bars can be styled separately
+playersHTML += '<div class="chart-container players-chart">';
 
 const maxRecords = Math.max(...sortedPlayers.map(p => p[1]));
-    sortedPlayers.forEach((player, index) => {
+sortedPlayers.forEach((player, index) => {
     const barWidth = (player[1] / maxRecords) * 100;
     playersHTML += `
         <div class="chart-bar">
             <span class="player-rank">${index + 1}.</span>
             <span class="player-name">${esc(player[0])}</span>
-            <div class="bar" style="width: ${barWidth}%;">
-                <span class="bar-value">${player[1]}</span>
+            <div class="bar-wrap">
+                <div class="bar-fill" style="width: ${barWidth}%;">
+                    <span class="bar-value">${player[1]}</span>
+                </div>
             </div>
         </div>
     `;
@@ -152,6 +167,19 @@ const maxRecords = Math.max(...sortedPlayers.map(p => p[1]));
 
 playersHTML += '</div></div>';
 statsContainer.innerHTML += playersHTML;
+
+// ensure fill widths are explicitly set (helps avoid any rendering inconsistencies on some mobile browsers)
+try {
+    const fills = statsContainer.querySelectorAll('.players-chart .bar-fill');
+    const max = Math.max(...sortedPlayers.map(p => p[1])) || 1;
+    fills.forEach((el, i) => {
+        const val = (sortedPlayers[i] && sortedPlayers[i][1]) ? sortedPlayers[i][1] : 0;
+        const pct = (val / max) * 100;
+        el.style.width = pct.toFixed(2) + '%';
+    });
+} catch (e) {
+    // non-fatal
+}
 
 const countryCounts = {};
 data.forEach(record => {

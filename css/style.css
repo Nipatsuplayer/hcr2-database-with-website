@@ -458,12 +458,79 @@ tr:nth-child(even) {
 .bar {
     position: relative;
     height: 22px;
-    min-width: 40px;
+    min-width: 0;
     background: linear-gradient(to right, #85a728ff, #28a745);
     border-radius: 6px;
     display: flex;
     align-items: center;
     padding-right: 8px;
+}
+
+/* Player bars (blue) */
+.players-chart .bar {
+  background: linear-gradient(90deg, #60a5fa, #1e3a8a);
+}
+
+/* New: flexible bar wrap and fill for accurate percentage rendering */
+.players-chart .bar-wrap {
+  flex: 1 1 auto;
+  background: rgba(0,0,0,0.04);
+  border-radius: 6px;
+  height: 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.players-chart .bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: linear-gradient(90deg, #60a5fa, #1e3a8a);
+  border-radius: 6px;
+  transition: width 350ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.players-chart .bar-value {
+  position: relative;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Stars (green) chart uses same structure as players */
+.stars-chart .bar-wrap {
+  flex: 1 1 auto;
+  background: rgba(0,0,0,0.04);
+  border-radius: 6px;
+  height: 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stars-chart .bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: linear-gradient(to right, #85a728ff, #28a745);
+  border-radius: 6px;
+  transition: width 350ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.stars-chart .bar-value {
+  position: relative;
+  color: #fff;
+  font-weight: 700;
 }
 
 .bar-value {
@@ -480,9 +547,10 @@ tr:nth-child(even) {
         width: 90px;
     }
 
-    .bar {
-        height: 20px;
-    }
+  .bar {
+    height: 20px;
+  }
+  .players-chart .bar-wrap { height: 20px; }
 }
 
 /* Ensure Discord PNG/SVG renders as white across breakpoints */
@@ -490,5 +558,158 @@ tr:nth-child(even) {
   -webkit-filter: brightness(0) invert(1) !important;
   filter: brightness(0) invert(1) !important;
   object-fit: contain;
+}
+
+/* ================= PIE / COUNTRY LEGEND ================= */
+.pie-container {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.pie-container canvas {
+  background: transparent;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  max-width: 460px;
+  width: 100%;
+  height: auto;
+}
+
+.pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+  text-align: left;
+  padding: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: transparent; /* will be set by inline JS */
+}
+
+.legend-label {
+  font-size: 14px;
+  color: #222;
+}
+
+@media (min-width: 769px) {
+  .pie-container {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .pie-legend {
+    max-width: 360px;
+    padding-left: 12px;
+  }
+}
+
+/* ================= STATS SECTION IMPROVEMENTS ================= */
+.stats-section {
+  margin: 20px auto;
+  padding: 16px;
+  border-radius: 10px;
+}
+
+.stats-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  color: #123;
+}
+
+.overall-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.stat-box {
+  background: #fff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  min-width: 150px;
+  text-align: center;
+}
+
+/* Slightly tighter table styles for stats tables */
+.stats-section table th, .stats-section table td {
+  padding: 8px 10px;
+}
+
+@media (max-width: 600px) {
+  .legend-label { font-size: 13px; }
+  .legend-color { width: 12px; height: 12px; }
+  .stat-box { min-width: 120px; padding: 10px; }
+}
+
+/* ================= VEHICLE HEADER RESPONSIVE FIX ================= */
+/* Inline styles in JS set absolute positioning for the title; override on small screens */
+.vehicle-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vehicle-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+}
+
+.vehicle-select-wrap {
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .vehicle-header {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .vehicle-title {
+    position: static !important;
+    left: auto !important;
+    transform: none !important;
+    text-align: center;
+    width: 100%;
+  }
+
+  .vehicle-select-wrap {
+    margin-left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .vehicle-select-wrap select {
+    max-width: 360px;
+    width: 92%;
+  }
 }
 
