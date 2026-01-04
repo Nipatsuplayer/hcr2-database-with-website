@@ -1,6 +1,22 @@
 let allData = []; 
 let currentDataType = ''; 
 let allPlayers = []; 
+let debounceTimer = null;
+const cachedSelectors = new Map();
+
+function getElement(id) {
+    if (!cachedSelectors.has(id)) {
+        cachedSelectors.set(id, document.getElementById(id));
+    }
+    return cachedSelectors.get(id);
+}
+
+function debounce(func, delay) {
+    return function(...args) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => func.apply(this, args), delay);
+    };
+}
 
 function esc(input) {
     if (input === null || input === undefined) return '';

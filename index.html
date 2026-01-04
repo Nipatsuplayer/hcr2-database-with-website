@@ -3,7 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://cdnjs.buymeacoffee.com" crossorigin>
+    <link rel="dns-prefetch" href="https://api.github.com">
+    <link rel="dns-prefetch" href="https://cdnjs.buymeacoffee.com">
+    <link rel="preload" as="image" href="img/image.png" type="image/png">
+    <link rel="preload" as="image" href="img/image copy.png" type="image/png">
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; max-width: 100%; overflow-x: hidden; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; min-height: 100vh; display: flex; flex-direction: column; }
+        header { width: 100%; background: linear-gradient(90deg, #007bff, #0056b3); color: #fff; position: relative; }
+        .header-inner { max-width: 1200px; margin: 0 auto; padding: 14px 16px; display: flex; align-items: center; gap: 16px; }
+        .branding { display: flex; align-items: center; gap: 12px; }
+        .branding img { height: 56px; width: auto; }
+        .branding h1 { margin: 0; font-size: 24px; line-height: 1.2; }
+        main { flex: 1; max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 16px; }
+        footer { background-color: #e8e8e8; text-align: center; padding: 20px 16px; border-top: 1px solid #ccc; }
+    </style>
     <title>HCR2 Database</title>
     <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
@@ -15,7 +32,7 @@
     <header>
         <div class="header-inner">
             <div class="branding">
-                <img src="img/image.png" alt="HCR2 Logo" id="logo">
+                <img src="img/image.png" alt="HCR2 Logo" id="logo" loading="eager" decoding="async">
                 <div>
                     <h1>Hill Climb Racing 2 Adventure Records</h1>
                     <div style="font-size:16px; opacity:0.9;">Community world records & stats</div>
@@ -59,7 +76,7 @@
     
         <div class="about-section" id="about-section">
 
-            <img src="img/image copy.png" alt="Info Icon" style="height: 200px; vertical-align: middle; margin-bottom: 10px;">
+            <img src="img/image copy.png" alt="Info Icon" style="height: 200px; vertical-align: middle; margin-bottom: 10px;" loading="lazy" decoding="async">
 
             <h2>About Hill Climb Racing 2 Records ℹ️</h2>
             <p id="about-text" style="max-width: 800px; margin: 0 auto; font-size: 16px; line-height: 1.5;">
@@ -151,7 +168,7 @@
             </p>
         </footer>
     </main>
-<script src="js/script.js"></script>
-<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="nipatsu" data-color="#FFDD00" data-emoji="🚗"  data-font="Cookie" data-text="Support Us!" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" ></script>
+<script src="js/script.js" defer></script>
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="nipatsu" data-color="#FFDD00" data-emoji="🚗"  data-font="Cookie" data-text="Support Us!" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff" defer></script>
 </body>
 </html>
