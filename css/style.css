@@ -736,3 +736,33 @@ tr:nth-child(even) {
 
 
 }
+
+/* Ensure tables generated directly inside data/stats containers are responsive on small screens */
+@media (max-width: 768px) {
+  #data-container, #stats-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+
+  /* Apply fixed layout and wrapping to any table inside those containers */
+  #data-container table,
+  #stats-container table,
+  main table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    min-width: 0 !important;
+  }
+
+  #data-container table th,
+  #data-container table td,
+  #stats-container table th,
+  #stats-container table td,
+  main table th,
+  main table td {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+}
