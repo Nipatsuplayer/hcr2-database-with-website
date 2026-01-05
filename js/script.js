@@ -36,7 +36,7 @@ dataContainer.style.display = 'none';
 if (filterContainer) filterContainer.style.display = 'none';
 statsContainer.style.display = 'block';
 
-    fetch('php/load_data.php?type=records')
+    fetch('php/load_data.php?type=records&t=' + Date.now())
     .then(response => response.json())
     .then(data => {
         if (data.error) {
@@ -538,7 +538,7 @@ if (dataType === 'records') {
     if (filterContainer) filterContainer.style.display = 'none'; 
 }
 
-    fetch('php/load_data.php?type=' + dataType)
+    fetch('php/load_data.php?type=' + dataType + '&t=' + Date.now())
     .then(response => response.json())
     .then(data => {
         if (data.error) {
@@ -556,7 +556,7 @@ if (dataType === 'records') {
 }
 
 function fetchSummary() {
-fetch('php/load_data.php?type=records')
+fetch('php/load_data.php?type=records&t=' + Date.now())
     .then(response => response.json())
     .then(data => {
         if (data.error) {
@@ -895,14 +895,14 @@ async function loadNews() {
 
 async function populatePublicSubmitOptions() {
     try {
-        const mapsRes = await fetch('php/load_data.php?type=maps');
+        const mapsRes = await fetch('php/load_data.php?type=maps&t=' + Date.now());
         const maps = await mapsRes.json();
         const mapSel = document.getElementById('public-map-select');
         if (mapSel && Array.isArray(maps)) {
             mapSel.innerHTML = '<option value="">Select a Map</option>' + maps.map(m => `<option value="${esc(m.idMap)}">${esc(m.nameMap)}</option>`).join('');
         }
 
-        const vehiclesRes = await fetch('php/load_data.php?type=vehicles');
+        const vehiclesRes = await fetch('php/load_data.php?type=vehicles&t=' + Date.now());
         const vehicles = await vehiclesRes.json();
         const vehicleSel = document.getElementById('public-vehicle-select');
         if (vehicleSel && Array.isArray(vehicles)) {
@@ -1042,7 +1042,7 @@ fetch('php/submit_record.php', {
 }
 
 function populateDeleteOptions() {
-fetch('php/load_data.php?type=records')
+fetch('php/load_data.php?type=records&t=' + Date.now())
     .then(response => response.json())
     .then(data => {
         const recordSelect = document.getElementById('record-select');

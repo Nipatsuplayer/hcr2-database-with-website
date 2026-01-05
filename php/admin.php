@@ -120,7 +120,8 @@ function esc(input) {
 let allPlayers = [];
 
 async function fetchJSON(url) {
-    const res = await fetch(url, { credentials: 'same-origin' });
+    const u = url + (url.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+    const res = await fetch(u, { credentials: 'same-origin' });
     return res.json();
 }
 
