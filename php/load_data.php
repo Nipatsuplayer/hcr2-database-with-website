@@ -1,17 +1,6 @@
 <?php
 
 header('Content-Type: application/json');
-header('Cache-Control: public, max-age=3600');
-header('ETag: "' . md5($_GET['type'] ?? 'default') . '"');
-header_remove('Pragma');
-
-if (isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
-    $etag = '"' . md5($_GET['type'] ?? 'default') . '"';
-    if ($_SERVER['HTTP_IF_NONE_MATCH'] === $etag) {
-        http_response_code(304);
-        exit;
-    }
-}
 
 $db_file = __DIR__ . '/../main.sqlite';
 try {
