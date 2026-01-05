@@ -712,5 +712,27 @@ tr:nth-child(even) {
     max-width: 360px;
     width: 92%;
   }
-}
 
+  /* Mobile: ensure tables don't overflow before JS runs */
+  .table-wrapper {
+    overflow-x: auto;
+    max-width: 100% !important;
+  }
+
+  /* stronger rules to override inline styles or JS-applied widths */
+  .table-wrapper table {
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important; /* allow cells to break and respect container width */
+    min-width: 0 !important; /* override any larger intrinsic widths */
+  }
+
+  .table-wrapper th,
+  .table-wrapper td {
+    white-space: normal !important; /* allow wrapping */
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+
+}
