@@ -38,6 +38,19 @@ header {
   position: relative;
 }
 
+/* Small device note shown at top on small viewports to advise desktop use */
+.device-note {
+  text-align: center;
+  padding: 6px 10px;
+  font-size: 14px;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+@media (min-width: 769px) {
+  .device-note { display: none; }
+}
+
 /* Inner container (centers content) */
 .header-inner {
   max-width: 1200px;

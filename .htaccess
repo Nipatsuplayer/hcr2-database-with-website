@@ -1,0 +1,27 @@
+<IfModule mod_authz_core.c>
+  <FilesMatch "\.(sqlite|sqlite3)$">
+    Require all denied
+  </FilesMatch>
+  <Files ".env">
+    Require all denied
+  </Files>
+  <Directory "/backups">
+    Require all denied
+  </Directory>
+</IfModule>
+
+# Fallback for older Apache versions
+<IfModule !mod_authz_core.c>
+  <FilesMatch "\.(sqlite|sqlite3)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+  <Files ".env">
+    Order allow,deny
+    Deny from all
+  </Files>
+  <Directory "/backups">
+    Order allow,deny
+    Deny from all
+  </Directory>
+</IfModule>
