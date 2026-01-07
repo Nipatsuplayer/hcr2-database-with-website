@@ -453,17 +453,34 @@ tr:nth-child(even) {
 
 .dropdown-panel {
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column; /* stack items vertically */
+  gap: 6px; /* space between checkbox items to avoid overlap */
+  align-items: stretch;
+  padding: 6px; /* small padding so items don't touch edges */
+  min-width: 180px; /* avoid extremely narrow panels */
+  max-width: 340px; /* constrain width so adjacent panels don't overlap */
 }
 
+/* Make each checkbox + label an inline-flex item so the checkbox and its text stay on one line */
 .dropdown-panel label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap; /* prevent label text from wrapping to the next line */
   cursor: pointer;
   font-weight: normal;
+  font-size: 13px;
   margin: 0;
+  padding: 4px 6px;
+  width: 100%; /* make each label take full panel width so checkbox stays left */
+  box-sizing: border-box;
 }
 
 .dropdown-panel input[type="checkbox"] {
   margin-right: 6px;
   width: auto !important;
+  flex-shrink: 0;
 }
 
 /* === DISTANCE FILTER STYLES === */

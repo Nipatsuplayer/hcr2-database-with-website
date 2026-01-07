@@ -775,6 +775,11 @@ container.insertAdjacentHTML('beforebegin', searchHTML);
 function toggleDropdown(type) {
     const panel = document.getElementById(type + '-panel');
     if (!panel) return;
+    // Close any other open dropdown panels so only one is visible at a time
+    const panels = document.querySelectorAll('.dropdown-panel');
+    panels.forEach(p => {
+        if (p !== panel) p.style.display = 'none';
+    });
     panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
 }
 
