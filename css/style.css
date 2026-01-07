@@ -434,6 +434,101 @@ tr:nth-child(even) {
   }
 }
 
+/* === MULTI-DROPDOWN STYLES === */
+.multi-dropdown button {
+  padding: 8px 12px !important;
+  border-radius: 4px;
+  border: 1px solid #ccc !important;
+  background-color: #f9f9f9;
+  color: #333;
+  cursor: pointer;
+  font-size: 14px;
+  width: auto !important;
+  min-width: 150px !important;
+}
+
+.multi-dropdown button:hover {
+  background-color: #f0f0f0;
+}
+
+.dropdown-panel {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.dropdown-panel label {
+  cursor: pointer;
+  font-weight: normal;
+  margin: 0;
+}
+
+.dropdown-panel input[type="checkbox"] {
+  margin-right: 6px;
+  width: auto !important;
+}
+
+/* === DISTANCE FILTER STYLES === */
+.distance-filter {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.distance-filter select,
+.distance-filter input {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  width: auto !important;
+  min-width: 100px !important;
+}
+
+/* === PLAYER RECORD FILTER STYLES === */
+.player-record-filter {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.player-record-filter select,
+.player-record-filter input {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  width: auto !important;
+  min-width: 100px !important;
+}
+
+@media (max-width: 768px) {
+  .filter-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .distance-filter,
+  .player-record-filter {
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .distance-filter select,
+  .distance-filter input,
+  .player-record-filter select,
+  .player-record-filter input {
+    flex: 1;
+    min-width: auto !important;
+  }
+
+  .multi-dropdown button {
+    width: 100% !important;
+  }
+
+  .filter-container input {
+    width: 100% !important;
+  }
+}
+
 /* === STATS BAR CHART FIX === */
 
 .chart-container {

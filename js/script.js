@@ -12,6 +12,16 @@ function esc(input) {
         .replace(/'/g, '&#39;');
 }
 
+function formatDistance(value, decimals = null) {
+    if (value === null || value === undefined || value === '') return '';
+    const num = Number(value);
+    if (isNaN(num)) return esc(value);
+    if (decimals !== null) {
+        return esc(num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }));
+    }
+    return esc(Math.round(num).toLocaleString());
+}
+
 function fetchWithTimeout(resource, options = {}, timeout = 3000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
@@ -115,7 +125,7 @@ sortedVehiclesByStars.forEach((vehicle, index) => {
             <span class="player-name">${esc(vehicle[0])}</span>
             <div class="bar-wrap">
                 <div class="bar-fill" style="width: ${barWidth}%; background: linear-gradient(to right, #85a728ff, #28a745);">
-                    <span class="bar-value">${vehicle[1].toLocaleString()}</span>
+                    <span class="bar-value">${formatDistance(vehicle[1])}</span>
                 </div>
             </div>
         </div>
@@ -123,7 +133,7 @@ sortedVehiclesByStars.forEach((vehicle, index) => {
 });
 
 starsHTML += `<div class="total-stars"> ⭐ Total Adventure Stars : </div>`;
-starsHTML += `<div class="total-stars-value">${totalStars.toLocaleString()}</div>`;
+starsHTML += `<div class="total-stars-value">${formatDistance(totalStars)}</div>`;
 starsHTML += '</div></div>';
 statsContainer.innerHTML += starsHTML;
 
@@ -265,8 +275,8 @@ const sortedMaps = Object.entries(mapStats)
 let mapHTML = '<div class="stats-section"><h3>Map Statistics</h3><table>';
 mapHTML += '<tr><th>Map Name</th><th>Total Records</th><th>Total Distance</th><th>Average Distance</th></tr>';
     sortedMaps.forEach(map => {
-    const avgDistance = (map[1].distance / map[1].count).toFixed(2);
-    mapHTML += `<tr><td>${esc(map[0])}</td><td>${map[1].count}</td><td>${map[1].distance}</td><td>${avgDistance}</td></tr>`;
+    const avgDistanceNum = (map[1].distance / map[1].count);
+    mapHTML += `<tr><td>${esc(map[0])}</td><td>${map[1].count}</td><td>${formatDistance(map[1].distance)}</td><td>${formatDistance(avgDistanceNum, 2)}</td></tr>`;
 });
 mapHTML += '</table></div>';
 statsContainer.innerHTML += mapHTML;
@@ -280,8 +290,8 @@ const uniqueMaps = new Set(data.map(r => r.map_name)).size;
 
 let overallHTML = '<div class="stats-section"><h3>Overall Statistics</h3><div class="overall-stats">';
 overallHTML += `<div class="stat-box"><strong>Total Records:</strong> ${esc(totalRecords)}</div>`;
-overallHTML += `<div class="stat-box"><strong>Total Distance:</strong> ${esc(totalDistance)}</div>`;
-overallHTML += `<div class="stat-box"><strong>Average Distance:</strong> ${esc(avgDistance)}</div>`;
+overallHTML += `<div class="stat-box"><strong>Total Distance:</strong> ${formatDistance(totalDistance)}</div>`;
+overallHTML += `<div class="stat-box"><strong>Average Distance:</strong> ${formatDistance(avgDistance, 2)}</div>`;
 overallHTML += `<div class="stat-box"><strong>Unique Players:</strong> ${esc(uniquePlayers)}</div>`;
 overallHTML += `<div class="stat-box"><strong>Unique Vehicles:</strong> ${esc(uniqueVehicles)}</div>`;
 overallHTML += `<div class="stat-box"><strong>Unique Maps:</strong> ${esc(uniqueMaps)}</div>`;
@@ -309,7 +319,7 @@ if (sortType === 'total-distance') {
     
     html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Total Distance</th></tr>';
     sortedVehicles.forEach((vehicle, index) => {
-        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1].toLocaleString()}</td></tr>`;
+        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${formatDistance(vehicle[1])}</td></tr>`;
     });
 
 } else if (sortType === 'longest-distance') {
@@ -329,7 +339,7 @@ if (sortType === 'total-distance') {
 
     html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Longest Distance</th><th>Map</th></tr>';
     sortedByLongest.forEach((vehicle, index) => {
-        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1].distance.toLocaleString()}</td><td>${vehicle[1].map}</td></tr>`;
+        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${formatDistance(vehicle[1].distance)}</td><td>${vehicle[1].map}</td></tr>`;
     });
 
 } else if (sortType === 'avg-placement') {
@@ -529,13 +539,19 @@ if (currentDataType === dataType && container.style.display === 'block') {
     return;
 }
 
-currentDataType = dataType; 
-container.style.display = 'block'; 
+currentDataType = dataType;
+container.style.display = 'block';
 
-if (dataType === 'records') {
-    if (filterContainer) filterContainer.style.display = 'flex'; 
+// Reset and remove existing filter container when switching data types
+resetFilters();
+if (filterContainer) {
+    filterContainer.remove();
+}
+
+if (dataType === 'records' || dataType === 'players') {
+    // Filters will be created fresh by addSearchAndFilter() or addPlayerFilters()
 } else {
-    if (filterContainer) filterContainer.style.display = 'none'; 
+    // No filters for maps, vehicles, players (old filter will be gone)
 }
 
     fetch('php/load_data.php?type=' + dataType + '&t=' + Date.now())
@@ -545,8 +561,28 @@ if (dataType === 'records') {
             console.error('Error:', data.error);
             container.innerHTML = '<p style="color:red;">' + data.error + '</p>';
         } else {
-            allData = data; 
-            displayData(data, dataType);
+            allData = data;
+            
+            if (dataType === 'players') {
+                fetch('php/load_data.php?type=records&t=' + Date.now())
+                    .then(recordsRes => recordsRes.json())
+                    .then(recordsData => {
+                        const playerRecordCounts = {};
+                        (recordsData || []).forEach(record => {
+                            const playerName = record.player_name || '';
+                            playerRecordCounts[playerName] = (playerRecordCounts[playerName] || 0) + 1;
+                        });
+                        window.playerRecordCounts = playerRecordCounts;
+                        displayData(data, dataType);
+                    })
+                    .catch(err => {
+                        console.error('Failed to load records for player counts', err);
+                        window.playerRecordCounts = {};
+                        displayData(data, dataType);
+                    });
+            } else {
+                displayData(data, dataType);
+            }
         }
     })
     .catch(error => {
@@ -610,6 +646,10 @@ if (dataType === 'records' && !document.getElementById('filter-container')) {
     addSearchAndFilter();
 }
 
+if (dataType === 'players' && !document.getElementById('filter-container')) {
+    addPlayerFilters();
+}
+
 container.innerHTML += '<h2>' + dataType.toUpperCase() + '</h2>'; 
 
 if (data.length === 0) {
@@ -629,9 +669,10 @@ if (dataType === 'maps') {
         tableHTML += `<tr><td>${item.idVehicle}</td><td>${item.nameVehicle}</td></tr>`;
     });
 } else if (dataType === 'players') {
-    tableHTML += '<tr><th>Player ID</th><th>Player Name</th><th>Country</th></tr>';
+    tableHTML += '<tr><th>Player ID</th><th>Player Name</th><th>Country</th><th>World Records</th></tr>';
     data.forEach(item => {
-        tableHTML += `<tr><td>${item.idPlayer}</td><td>${item.namePlayer}</td><td>${item.country}</td></tr>`;
+        const recordCount = window.playerRecordCounts ? (window.playerRecordCounts[item.namePlayer] || 0) : 0;
+        tableHTML += `<tr><td>${item.idPlayer}</td><td>${esc(item.namePlayer)}</td><td>${esc(item.country || 'Unknown')}</td><td>${recordCount}</td></tr>`;
     });
 } else if (dataType === 'records') {
     const sortSelect = document.getElementById('sort-select');
@@ -670,7 +711,7 @@ if (dataType === 'maps') {
     tableHTML += '<tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr>';
     records.forEach(item => {
         tableHTML += `<tr>
-                        <td>${esc(item.distance)}</td>
+                        <td>${formatDistance(item.distance)}</td>
                         <td>${esc(item.map_name)}</td>
                         <td>${esc(item.vehicle_name)}</td>
                         <td>${esc(item.player_name)}</td>
@@ -685,45 +726,201 @@ container.innerHTML += tableHTML;
 
 function addSearchAndFilter() {
 const container = document.getElementById('data-container');
+const maps = [...new Set(allData.map(record => record.map_name))].filter(Boolean).sort();
+const vehicles = [...new Set(allData.map(record => record.vehicle_name))].filter(Boolean).sort();
+
+const mapCheckboxes = maps.map(m => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(m)}" onchange="onMultiFilterChange('map')"> ${esc(m)}</label>`).join('');
+const vehicleCheckboxes = vehicles.map(v => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(v)}" onchange="onMultiFilterChange('vehicle')"> ${esc(v)}</label>`).join('');
+
 const searchHTML = `
     <div id="filter-container" class="filter-container">
         <input type="text" id="search-bar" placeholder="Search by player, map, or vehicle..." oninput="filterRecords()">
-    <button id="export-btn" onclick="exportToCSV()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background-color: #28a745; color: white; cursor: pointer; font-size: 14px; margin-left: 8px;">📥 Export CSV</button>
-        <select id="map-filter" onchange="filterRecords()">
-            <option value="">Filter by Map</option>
-            ${[...new Set(allData.map(record => record.map_name))].map(map => `<option value="${esc(map)}">${esc(map)}</option>`).join('')}
-        </select>
-        <select id="sort-select" onchange="filterRecords()" title="Sort records">
+        <button id="export-btn" onclick="exportToCSV()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background-color: #28a745; color: white; cursor: pointer; font-size: 14px; margin-left: 8px;">📥 Export CSV</button>
+
+        <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
+            <button id="map-btn" onclick="toggleDropdown('map')" type="button">Filter by Map</button>
+            <div id="map-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Maps</strong><button type="button" onclick="clearMultiFilter('map')" style="font-size:12px;">Clear</button></div>
+                ${mapCheckboxes}
+            </div>
+        </div>
+
+        <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
+            <button id="vehicle-btn" onclick="toggleDropdown('vehicle')" type="button">Filter by Vehicle</button>
+            <div id="vehicle-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Vehicles</strong><button type="button" onclick="clearMultiFilter('vehicle')" style="font-size:12px;">Clear</button></div>
+                ${vehicleCheckboxes}
+            </div>
+        </div>
+
+        <select id="sort-select" onchange="filterRecords()" title="Sort records" style="margin-left:8px;">
             <option value="default">Default: Map / Vehicle Alphabetically</option>
             <option value="dist-asc">Distance ↑ (ascending)</option>
             <option value="dist-desc">Distance ↓ (descending)</option>
         </select>
-        <select id="vehicle-filter" onchange="filterRecords()">
-            <option value="">Filter by Vehicle</option>
-            ${[...new Set(allData.map(record => record.vehicle_name))].map(vehicle => `<option value="${esc(vehicle)}">${esc(vehicle)}</option>`).join('')}
-        </select>
+
+        <div class="distance-filter" style="display:inline-block; margin-left:8px;">
+            <select id="distance-op" onchange="filterRecords()">
+                <option value="">Distance</option>
+                <option value="gte">≥</option>
+                <option value="lte">≤</option>
+            </select>
+            <input type="number" id="distance-value" placeholder="Distance" oninput="filterRecords()" style="width:120px; margin-left:6px;">
+        </div>
     </div>
 `;
 container.insertAdjacentHTML('beforebegin', searchHTML);
 }
 
+function toggleDropdown(type) {
+    const panel = document.getElementById(type + '-panel');
+    if (!panel) return;
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
+function getSelectedMultiValues(type) {
+    const panel = document.getElementById(type + '-panel');
+    if (!panel) return [];
+    return Array.from(panel.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+}
+
+function onMultiFilterChange(type) {
+    const btn = document.getElementById(type + '-btn');
+    const sel = getSelectedMultiValues(type);
+    if (btn) btn.textContent = sel.length ? `${type.charAt(0).toUpperCase() + type.slice(1)} (${sel.length})` : `Filter by ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    filterRecords();
+}
+
+function clearMultiFilter(type) {
+    const panel = document.getElementById(type + '-panel');
+    if (!panel) return;
+    panel.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+    const btn = document.getElementById(type + '-btn');
+    if (btn) btn.textContent = `Filter by ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    filterRecords();
+}
+
+function resetFilters() {
+    // Close all dropdown panels
+    const panels = document.querySelectorAll('.dropdown-panel');
+    panels.forEach(panel => panel.style.display = 'none');
+    
+    // Reset all text inputs
+    const inputs = document.querySelectorAll('#search-bar, #player-search');
+    inputs.forEach(input => input.value = '');
+    
+    // Reset all select dropdowns
+    const selects = document.querySelectorAll('#sort-select, #distance-op, #record-count-op');
+    selects.forEach(select => select.value = '');
+    
+    // Reset number inputs
+    const numberInputs = document.querySelectorAll('#distance-value, #record-count-value');
+    numberInputs.forEach(input => input.value = '');
+    
+    // Uncheck all checkboxes
+    const checkboxes = document.querySelectorAll('.dropdown-panel input[type=checkbox]');
+    checkboxes.forEach(cb => cb.checked = false);
+    
+    // Reset button labels only for filter buttons inside the filter container
+    const filterButtons = document.querySelectorAll('#filter-container [id$="-btn"]');
+    filterButtons.forEach(btn => {
+        const type = btn.id.replace('-btn', '');
+        btn.textContent = `Filter by ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    });
+}
+
 
 function filterRecords() {
-const searchQuery = document.getElementById('search-bar').value.toLowerCase();
-const mapFilter = document.getElementById('map-filter').value;
-const vehicleFilter = document.getElementById('vehicle-filter').value;
+const searchQuery = (document.getElementById('search-bar')?.value || '').toLowerCase();
+const mapSelected = getSelectedMultiValues('map');
+const vehicleSelected = getSelectedMultiValues('vehicle');
+const distOp = document.getElementById('distance-op')?.value || '';
+const distValRaw = document.getElementById('distance-value')?.value;
+const distVal = distValRaw ? Number(distValRaw) : NaN;
 
-const filteredData = allData.filter(record => {
-    const matchesSearch = record.player_name.toLowerCase().includes(searchQuery) ||
-                            record.map_name.toLowerCase().includes(searchQuery) ||
-                            record.vehicle_name.toLowerCase().includes(searchQuery);
-    const matchesMap = !mapFilter || record.map_name === mapFilter;
-    const matchesVehicle = !vehicleFilter || record.vehicle_name === vehicleFilter;
+const filteredData = (allData || []).filter(record => {
+    const matchesSearch = (record.player_name || '').toString().toLowerCase().includes(searchQuery) ||
+                            (record.map_name || '').toString().toLowerCase().includes(searchQuery) ||
+                            (record.vehicle_name || '').toString().toLowerCase().includes(searchQuery);
 
-    return matchesSearch && matchesMap && matchesVehicle;
+    const matchesMap = !mapSelected || mapSelected.length === 0 || mapSelected.includes(record.map_name);
+    const matchesVehicle = !vehicleSelected || vehicleSelected.length === 0 || vehicleSelected.includes(record.vehicle_name);
+
+    let matchesDistance = true;
+    if (distOp === 'gte' && !isNaN(distVal)) {
+        matchesDistance = Number(record.distance) >= distVal;
+    } else if (distOp === 'lte' && !isNaN(distVal)) {
+        matchesDistance = Number(record.distance) <= distVal;
+    }
+
+    return matchesSearch && matchesMap && matchesVehicle && matchesDistance;
 });
 
 displayData(filteredData, currentDataType);
+}
+
+function addPlayerFilters() {
+const container = document.getElementById('data-container');
+const countries = [...new Set(allData.map(p => p.country).filter(c => c && c.trim()))].sort();
+const countryCheckboxes = countries.map(c => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(c)}" onchange="onPlayerFilterChange('country')"> ${esc(c)}</label>`).join('');
+
+const searchHTML = `
+    <div id="filter-container" class="filter-container">
+        <input type="text" id="player-search" placeholder="Search by player name..." oninput="filterPlayers()">
+
+        <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
+            <button id="country-btn" onclick="toggleDropdown('country')" type="button">Filter by Country</button>
+            <div id="country-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Countries</strong><button type="button" onclick="clearMultiFilter('country')" style="font-size:12px;">Clear</button></div>
+                ${countryCheckboxes}
+            </div>
+        </div>
+
+        <div class="player-record-filter" style="display:inline-block; margin-left:8px;">
+            <select id="record-count-op" onchange="filterPlayers()">
+                <option value="">Records</option>
+                <option value="gte">≥</option>
+                <option value="lte">≤</option>
+            </select>
+            <input type="number" id="record-count-value" placeholder="Count" oninput="filterPlayers()" style="width:100px; margin-left:6px;" min="0">
+        </div>
+    </div>
+`;
+container.insertAdjacentHTML('beforebegin', searchHTML);
+}
+
+function filterPlayers() {
+const searchQuery = (document.getElementById('player-search')?.value || '').toLowerCase();
+const countrySelected = getSelectedMultiValues('country');
+const recordOp = document.getElementById('record-count-op')?.value || '';
+const recordValRaw = document.getElementById('record-count-value')?.value;
+const recordVal = recordValRaw ? Number(recordValRaw) : NaN;
+
+const filteredData = (allData || []).filter(player => {
+    const matchesSearch = (player.namePlayer || '').toString().toLowerCase().includes(searchQuery) ||
+                          (player.country || '').toString().toLowerCase().includes(searchQuery);
+
+    const matchesCountry = !countrySelected || countrySelected.length === 0 || countrySelected.includes(player.country);
+
+    const recordCount = window.playerRecordCounts ? (window.playerRecordCounts[player.namePlayer] || 0) : 0;
+    let matchesRecordCount = true;
+    if (recordOp === 'gte' && !isNaN(recordVal)) {
+        matchesRecordCount = recordCount >= recordVal;
+    } else if (recordOp === 'lte' && !isNaN(recordVal)) {
+        matchesRecordCount = recordCount <= recordVal;
+    }
+
+    return matchesSearch && matchesCountry && matchesRecordCount;
+});
+
+displayData(filteredData, currentDataType);
+}
+
+function onPlayerFilterChange(type) {
+    const btn = document.getElementById(type + '-btn');
+    const sel = getSelectedMultiValues(type);
+    if (btn) btn.textContent = sel.length ? `${type.charAt(0).toUpperCase() + type.slice(1)} (${sel.length})` : `Filter by ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+    filterPlayers();
 }
 
 
@@ -1016,7 +1213,7 @@ fetch('php/submit_record.php', {
         const playerName = data.playerName || 'Unknown';
         const distance = data.distance || '?';
         
-        const successMsg = `✅ Record submitted! | ${playerName} | ${mapName} | ${vehicleName} | ${distance}m`;
+        const successMsg = `✅ Record submitted! | ${playerName} | ${mapName} | ${vehicleName} | ${formatDistance(distance)}m`;
         const msgEl = document.getElementById('form-message');
         msgEl.textContent = successMsg;
         msgEl.style.color = 'green';
@@ -1050,7 +1247,7 @@ fetch('php/load_data.php?type=records&t=' + Date.now())
         (data || []).forEach(record => {
             const option = document.createElement('option');
             option.value = record.idRecord;
-            option.textContent = `${record.distance} - ${record.map_name} - ${record.vehicle_name} - ${record.player_name}`;
+            option.textContent = `${formatDistance(record.distance)} - ${record.map_name} - ${record.vehicle_name} - ${record.player_name}`;
             recordSelect.appendChild(option);
         });
     });
@@ -1097,18 +1294,28 @@ fetch('php/delete_record.php', {
 }
 
 function exportToCSV() {
-    
     const searchQuery = (document.getElementById('search-bar')?.value || '').toLowerCase();
-    const mapFilter = (document.getElementById('map-filter')?.value) || '';
-    const vehicleFilter = (document.getElementById('vehicle-filter')?.value) || '';
+    const mapSelected = getSelectedMultiValues('map');
+    const vehicleSelected = getSelectedMultiValues('vehicle');
+    const distOp = document.getElementById('distance-op')?.value || '';
+    const distValRaw = document.getElementById('distance-value')?.value;
+    const distVal = distValRaw ? Number(distValRaw) : NaN;
 
     const filteredData = (allData || []).filter(record => {
         const matchesSearch = (record.player_name || '').toString().toLowerCase().includes(searchQuery) ||
                               (record.map_name || '').toString().toLowerCase().includes(searchQuery) ||
                               (record.vehicle_name || '').toString().toLowerCase().includes(searchQuery);
-        const matchesMap = !mapFilter || record.map_name === mapFilter;
-        const matchesVehicle = !vehicleFilter || record.vehicle_name === vehicleFilter;
-        return matchesSearch && matchesMap && matchesVehicle;
+        const matchesMap = !mapSelected || mapSelected.length === 0 || mapSelected.includes(record.map_name);
+        const matchesVehicle = !vehicleSelected || vehicleSelected.length === 0 || vehicleSelected.includes(record.vehicle_name);
+
+        let matchesDistance = true;
+        if (distOp === 'gte' && !isNaN(distVal)) {
+            matchesDistance = Number(record.distance) >= distVal;
+        } else if (distOp === 'lte' && !isNaN(distVal)) {
+            matchesDistance = Number(record.distance) <= distVal;
+        }
+
+        return matchesSearch && matchesMap && matchesVehicle && matchesDistance;
     });
 
     if (!filteredData || filteredData.length === 0) {
