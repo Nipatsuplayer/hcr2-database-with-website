@@ -4,6 +4,46 @@
   box-sizing: border-box;
 }
 
+/* === THEME VARIABLES & GLOBAL HELPERS === */
+:root {
+  --bg: #f4f4f9;
+  --text: #222222;
+  --muted: #555555;
+  --brand-1: #007bff;
+  --brand-2: #0056b3;
+  --discord: #5865F2;
+  --card-bg: #ffffff;
+  --shadow: 0 2px 5px rgba(0,0,0,0.08);
+  --radius: 8px;
+  --max-width: 1200px;
+  --container-padding: 16px;
+  --transition: 220ms ease;
+}
+
+/* utility: visually-hidden for screen-readers */
+.sr-only {
+  position: absolute !important;
+  height: 1px; width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  white-space: nowrap;
+}
+
+/* sensible focus styles for keyboard users */
+:focus {
+  outline: 3px solid rgba(0,123,255,0.14);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.06);
+}
+
+/* Respect users' reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -20,10 +60,24 @@ button {
   box-sizing: border-box;
 }
 
+/* Improved focus/active styles for form controls */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+  border-color: rgba(0,123,255,0.28);
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.06);
+}
+
 body {
   font-family: Arial, sans-serif;
-  background-color: #f4f4f9;
-  color: #333;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg);
+  color: var(--text);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -33,7 +87,7 @@ body {
 
 header {
   width: 100%;
-  background: linear-gradient(90deg, #007bff, #0056b3);
+  background: linear-gradient(90deg, var(--brand-1), var(--brand-2));
   color: #fff;
   position: relative;
 }
@@ -59,6 +113,14 @@ header {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* Generic centered container utility */
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  width: 100%;
 }
 
 
@@ -166,20 +228,37 @@ header {
 
 /* Normal buttons */
 .header-buttons button {
-  background: #fff;
-  color: #003b70;
-  border: none;
+  background: var(--card-bg);
+  color: var(--brand-2);
+  border: 1px solid rgba(0,0,0,0.06);
   padding: 8px 12px;
   border-radius: 6px;
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow: var(--shadow);
+  transition: transform var(--transition), filter var(--transition), box-shadow var(--transition);
 }
 
 .header-buttons button:hover {
   filter: brightness(0.95);
 }
+
+/* Reusable button utility */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(0,0,0,0.06);
+  background: var(--card-bg);
+  color: var(--brand-2);
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+}
+
 
 @media (min-width: 769px) {
   .header-buttons button {
@@ -190,8 +269,8 @@ header {
 
 /* Discord button */
 .discord-btn {
-  background: #5865F2 !important;
-  color: #fff !important;
+  background: var(--discord) !important;
+  color: var(--card-bg) !important;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -334,6 +413,142 @@ tr:nth-child(even) {
   cursor: pointer;
 }
 
+/* === Submission modal improvements === */
+.form-container {
+  padding: 6px 4px 12px 4px;
+}
+
+.form-container h2 {
+  margin-top: 0;
+  font-size: 20px;
+  color: var(--brand-2);
+}
+
+.form-container form {
+  display: block;
+  gap: 10px;
+}
+
+.form-container label {
+  display: block;
+  font-weight: 600;
+  margin: 8px 0 6px 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.form-container input[type="text"],
+.form-container input[type="number"],
+.form-container select,
+.form-container textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: var(--card-bg);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03) inset;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  font-size: 14px;
+}
+
+.form-container input:focus,
+.form-container select:focus,
+.form-container textarea:focus {
+  border-color: rgba(0,123,255,0.28);
+  box-shadow: 0 0 0 4px rgba(0,123,255,0.06);
+  outline: none;
+}
+
+.form-container .actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.form-container button {
+  color: linear-gradient(90deg,var(--brand-1),var(--brand-2));
+  font-size: 14px;
+}
+
+.form-container .actions button[type="submit"] {
+  background: linear-gradient(90deg,var(--brand-1),var(--brand-2));
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+}
+
+
+.form-container .actions button[type="submit"]:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.98);
+}
+
+.form-container .actions button[type="button"] {
+  background: var(--card-bg);
+  color: var(--muted);
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+/* Success / error message styles */
+#public-submit-message {
+  margin-top: 10px;
+  min-height: 20px;
+  font-weight: 600;
+}
+
+#public-submit-message.success {
+  color: #14632a; /* dark green */
+}
+
+#public-submit-message.error {
+  color: #8a1e1e; /* dark red */
+}
+
+/* Make modal form layout nicer on larger screens */
+@media (min-width: 600px) {
+  .form-container form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+    align-items: start;
+  }
+
+  /* make full-width items span both columns */
+  .form-container label:nth-of-type(odd),
+  .form-container label:nth-of-type(even) {
+    font-size: 14px;
+  }
+
+  /* target first label-input pair ordering: since HTML uses sequential label+input blocks, make inputs span columns */
+  .form-container select,
+  .form-container input,
+  .form-container textarea {
+    grid-column: span 1;
+  }
+
+  /* distance, player name, country: make them span full width for readability */
+  #public-distance-input,
+  #public-player-name,
+  #public-player-country {
+    grid-column: 1 / -1;
+  }
+
+  /* actions to span full width and align right */
+  .form-container .actions {
+    grid-column: 1 / -1;
+  }
+}
+
 /* ================= FOOTER ================= */
 
 #footer {
@@ -413,16 +628,21 @@ tr:nth-child(even) {
 
 .filter-container {
   display: flex;
-  gap: 10px;
-  margin: 20px 0;
+  gap: 12px;
+  margin: 20px auto;
   flex-wrap: wrap;
+  align-items: center;
+  background: var(--card-bg);
+  padding: 12px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  max-width: var(--max-width);
 }
 
 @media (min-width: 769px) {
   .filter-container {
     justify-content: center;
     flex-wrap: nowrap;
-    max-width: 1200px;
     margin: 20px auto;
   }
 
@@ -430,25 +650,30 @@ tr:nth-child(even) {
   .filter-container select,
   .filter-container button {
     width: auto;
-    min-width: 150px;
+    min-width: 140px;
   }
 }
 
 /* === MULTI-DROPDOWN STYLES === */
+
 .multi-dropdown button {
   padding: 8px 12px !important;
-  border-radius: 4px;
-  border: 1px solid #ccc !important;
-  background-color: #f9f9f9;
-  color: #333;
+  border-radius: 8px !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  background-color: var(--card-bg) !important;
+  color: var(--text);
   cursor: pointer;
   font-size: 14px;
   width: auto !important;
-  min-width: 150px !important;
+  min-width: 140px !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) inset;
+  transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
 }
 
 .multi-dropdown button:hover {
-  background-color: #f0f0f0;
+  transform: translateY(-1px);
+  filter: brightness(0.98);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.06);
 }
 
 .dropdown-panel {
@@ -493,11 +718,12 @@ tr:nth-child(even) {
 .distance-filter select,
 .distance-filter input {
   padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
   font-size: 14px;
   width: auto !important;
-  min-width: 100px !important;
+  min-width: 110px !important;
+  background: var(--card-bg);
 }
 
 /* === PLAYER RECORD FILTER STYLES === */
@@ -510,11 +736,12 @@ tr:nth-child(even) {
 .player-record-filter select,
 .player-record-filter input {
   padding: 8px 12px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
   font-size: 14px;
   width: auto !important;
-  min-width: 100px !important;
+  min-width: 110px !important;
+  background: var(--card-bg);
 }
 
 @media (max-width: 768px) {
