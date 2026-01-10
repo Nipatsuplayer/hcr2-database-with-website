@@ -12,6 +12,12 @@ try {
 }
 
 function get_data($db, $table, $select = '*', $where = '', $order = '', $limit = '') {
+    // Whitelist allowed tables to prevent SQL injection
+    $allowed_tables = ['Map', 'Vehicle', 'Player'];
+    if (!in_array($table, $allowed_tables)) {
+        return json_encode(array('error' => 'Invalid table'));
+    }
+    
     try {
         $sql = "SELECT $select FROM $table";
         if ($where) $sql .= " WHERE $where";
@@ -23,7 +29,7 @@ function get_data($db, $table, $select = '*', $where = '', $order = '', $limit =
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return json_encode($data);
     } catch (PDOException $e) {
-        return json_encode(array('error' => "Database error: " . $e->getMessage()));
+        return json_encode(array('error' => 'Database error'));
     }
 }
 

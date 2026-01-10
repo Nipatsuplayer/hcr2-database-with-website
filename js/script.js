@@ -1046,6 +1046,12 @@ function togglePublicSubmitForm() {
         document.addEventListener('keydown', publicSubmitKeyHandler);
         overlay.addEventListener('click', publicSubmitOverlayClick);
         
+        // Set form load time for honeypot validation
+        const formLoadTimeEl = document.getElementById('form-load-time');
+        if (formLoadTimeEl) {
+            formLoadTimeEl.value = Date.now();
+        }
+        
         setTimeout(() => {
             const first = document.getElementById('public-map-select');
             if (first) first.focus();
@@ -1134,11 +1140,28 @@ async function submitPublicRecord(e) {
     }
 
     try {
-        const hp = document.getElementById('hp_email') ? document.getElementById('hp_email').value.trim() : '';
+        // Collect all honeypot fields
+        const hp_email = document.getElementById('hp_email') ? document.getElementById('hp_email').value.trim() : '';
+        const hp_website = document.getElementById('hp_website') ? document.getElementById('hp_website').value.trim() : '';
+        const hp_phone = document.getElementById('hp_phone') ? document.getElementById('hp_phone').value.trim() : '';
+        const hp_comments = document.getElementById('hp_comments') ? document.getElementById('hp_comments').value.trim() : '';
+        
+        // Get timing data
+        const formLoadTime = parseInt(document.getElementById('form-load-time').value) || 0;
+        const submissionTime = Date.now();
+        
         const res = await fetch('php/public_submit.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ mapId, vehicleId, distance: Number(distance), playerName, playerCountry, hp_email: hp })
+            body: JSON.stringify({ 
+                mapId, vehicleId, distance: Number(distance), playerName, playerCountry,
+                hp_email: hp_email,
+                hp_website: hp_website,
+                hp_phone: hp_phone,
+                hp_comments: hp_comments,
+                form_load_time: formLoadTime,
+                submission_time: submissionTime,
+            })
         });
         const data = await res.json();
         if (!res.ok) {

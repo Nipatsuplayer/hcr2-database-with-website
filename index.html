@@ -106,6 +106,8 @@
                 <button class="modal-close" onclick="togglePublicSubmitForm()" aria-label="Close">✕</button>
                 <h2 id="public-submit-title">Submit a Record (for admin review)</h2>
                 <form id="public-submit-form" onsubmit="submitPublicRecord(event)">
+                    <!-- Hidden timestamp field to detect bots that submit too quickly -->
+                    <input type="hidden" id="form-load-time" value="">
                     <label>Map</label>
                     <select id="public-map-select" required></select>
                     <label>Vehicle</label>
@@ -116,10 +118,16 @@
                     <input type="text" id="public-player-name" required>
                     <label>Country (optional)</label>
                     <input type="text" id="public-player-country">
-                    <!-- Honeypot field to catch bots (should remain empty) -->
+                    <!-- Multiple honeypot fields to catch bots (should all remain empty) -->
                     <div style="position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;">
-                        <label for="hp_email">Leave this field empty</label>
-                        <input type="text" id="hp_email" name="hp_email" autocomplete="off" tabindex="-1">
+                        <label for="hp_email">Email (honeypot)</label>
+                        <input type="email" id="hp_email" name="hp_email" autocomplete="off" tabindex="-1" aria-hidden="true">
+                        <label for="hp_website">Website (honeypot)</label>
+                        <input type="url" id="hp_website" name="hp_website" autocomplete="off" tabindex="-1" aria-hidden="true">
+                        <label for="hp_phone">Phone (honeypot)</label>
+                        <input type="tel" id="hp_phone" name="hp_phone" autocomplete="off" tabindex="-1" aria-hidden="true">
+                        <label for="hp_comments">Comments (honeypot)</label>
+                        <textarea id="hp_comments" name="hp_comments" autocomplete="off" tabindex="-1" aria-hidden="true"></textarea>
                     </div>
                     <div class="actions">
                         <button type="submit">Send Submission</button>

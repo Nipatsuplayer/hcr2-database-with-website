@@ -22,8 +22,14 @@ $vehicleId = isset($data['vehicleId']) ? (int)$data['vehicleId'] : null;
 $distance = isset($data['distance']) ? (int)$data['distance'] : null;
 $playerName = isset($data['playerName']) ? trim($data['playerName']) : '';
 $playerCountry = isset($data['playerCountry']) ? trim($data['playerCountry']) : '';
-// Honeypot field (should be empty)
-$honeypot = isset($data['hp_email']) ? trim($data['hp_email']) : '';
+
+// Multiple honeypot fields (all should be empty)
+$honeypot_email = isset($data['hp_email']) ? trim($data['hp_email']) : '';
+$honeypot_website = isset($data['hp_website']) ? trim($data['hp_website']) : '';
+$honeypot_phone = isset($data['hp_phone']) ? trim($data['hp_phone']) : '';
+$honeypot_comments = isset($data['hp_comments']) ? trim($data['hp_comments']) : '';
+$form_load_time = isset($data['form_load_time']) ? (int)$data['form_load_time'] : 0;
+$submission_time = isset($data['submission_time']) ? (int)$data['submission_time'] : 0;
 
 if (empty($mapId) || empty($vehicleId) || empty($distance) || empty($playerName)) {
     http_response_code(400);
@@ -31,10 +37,27 @@ if (empty($mapId) || empty($vehicleId) || empty($distance) || empty($playerName)
     exit;
 }
 
-if (!empty($honeypot)) {
+// Honeypot validation: if ANY honeypot field is filled, reject
+if (!empty($honeypot_email) || !empty($honeypot_website) || !empty($honeypot_phone) || !empty($honeypot_comments)) {
     http_response_code(400);
     echo json_encode(['error' => 'Spam detected']);
     exit;
+}
+
+// Timing validation: reject if form was submitted too quickly (less than 2 seconds)
+if ($form_load_time > 0 && $submission_time > 0) {
+    $time_spent = $submission_time - $form_load_time;
+    if ($time_spent < 2000) { // 2 seconds minimum
+        http_response_code(429);
+        echo json_encode(['error' => 'Please take your time to fill out the form. Submissions that are too fast are rejected.']);
+        exit;
+    }
+    // Also reject if suspiciously fast (less than 1 second) - likely automated
+    if ($time_spent < 1000) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Spam detected']);
+        exit;
+    }
 }
 
 if ($distance <= 0) {
