@@ -344,19 +344,42 @@ main {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 table {
   border-collapse: collapse;
   width: 100%;
   margin: 20px 0;
-  background: #fff;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  background: var(--card-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 th, td {
-  border: 1px solid #ddd;
-  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 12px 14px;
+  text-align: left;
+}
+
+th {
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
+  font-weight: 700;
+  color: var(--brand-2);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+tr:hover {
+  background: rgba(0, 123, 255, 0.04);
+  transition: background-color var(--transition);
 }
 
 @media (min-width: 769px) {
@@ -368,15 +391,6 @@ th, td {
     white-space: nowrap;
   }
 }
-
-th {
-  background: #f2f2f2;
-}
-
-tr:nth-child(even) {
-  background: #f9f9f9;
-}
-
 
 /* ================= MODALS (MOBILE SAFE) ================= */
 
@@ -1043,8 +1057,12 @@ tr:nth-child(even) {
 
 /* Slightly tighter table styles for stats tables */
 .stats-section table th, .stats-section table td {
-  padding: 8px 10px;
+  padding: 10px 12px;
   text-wrap: wrap;
+}
+
+.stats-section table {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 @media (max-width: 600px) {
