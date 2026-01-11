@@ -3,6 +3,34 @@ require_once __DIR__ . '/../auth/config.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+// hCaptcha verification
+function verify_hcaptcha($token, $secret) {
+    if (empty($token) || empty($secret)) {
+        return false;
+    }
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://hcaptcha.com/siteverify');
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'secret' => $secret,
+        'response' => $token
+    ]));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200 || !$response) {
+        return false;
+    }
+    
+    $result = json_decode($response, true);
+    return isset($result['success']) && $result['success'] === true;
+}
+
 $db_file = __DIR__ . '/../main.sqlite';
 try {
     $db = new PDO('sqlite:' . $db_file);
@@ -17,6 +45,8 @@ $raw = file_get_contents('php://input');
 $data = json_decode($raw, true);
 if (!is_array($data)) $data = $_POST ?? [];
 
+$hcaptcha_response = isset($data['h_captcha_response']) ? trim($data['h_captcha_response']) : '';
+
 $mapId = isset($data['mapId']) ? (int)$data['mapId'] : null;
 $vehicleId = isset($data['vehicleId']) ? (int)$data['vehicleId'] : null;
 $distance = isset($data['distance']) ? (int)$data['distance'] : null;
@@ -30,6 +60,13 @@ $honeypot_phone = isset($data['hp_phone']) ? trim($data['hp_phone']) : '';
 $honeypot_comments = isset($data['hp_comments']) ? trim($data['hp_comments']) : '';
 $form_load_time = isset($data['form_load_time']) ? (int)$data['form_load_time'] : 0;
 $submission_time = isset($data['submission_time']) ? (int)$data['submission_time'] : 0;
+
+// Verify hCaptcha first
+if (!verify_hcaptcha($hcaptcha_response, $HCAPTCHA_SECRET_KEY)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'hCaptcha verification failed. Please try again.']);
+    exit;
+}
 
 if (empty($mapId) || empty($vehicleId) || empty($distance) || empty($playerName)) {
     http_response_code(400);

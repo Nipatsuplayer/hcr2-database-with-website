@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
     <link rel="manifest" href="img/site.webmanifest">
-
+    <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body>
     <header>
@@ -118,6 +118,9 @@
                     <input type="text" id="public-player-name" required>
                     <label>Country (optional)</label>
                     <input type="text" id="public-player-country">
+                    <!-- hCaptcha verification -->
+                    <div class="h-captcha" id="hcaptcha-widget" data-sitekey="" required></div>
+                    <input type="hidden" id="h-captcha-response" name="h_captcha_response">
                     <!-- Multiple honeypot fields to catch bots (should all remain empty) -->
                     <div style="position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;">
                         <label for="hp_email">Email (honeypot)</label>

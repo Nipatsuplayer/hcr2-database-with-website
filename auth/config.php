@@ -33,6 +33,9 @@ if ($raw !== '') {
 
 $DISCORD_OAUTH_CONFIGURED = (!empty($DISCORD_CLIENT_ID) && !empty($DISCORD_CLIENT_SECRET) && !empty($DISCORD_REDIRECT_URI));
 
+$HCAPTCHA_SITE_KEY = getenv('HCAPTCHA_SITE_KEY') ?: '';
+$HCAPTCHA_SECRET_KEY = getenv('HCAPTCHA_SECRET_KEY') ?: '';
+
 if (!headers_sent()) {
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: DENY');
@@ -40,7 +43,7 @@ if (!headers_sent()) {
     header("Permissions-Policy: interest-cohort=()");
     header('X-Permitted-Cross-Domain-Policies: none');
 
-    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://api.github.com https://cdnjs.buymeacoffee.com; connect-src 'self' https://api.github.com https://cdnjs.buymeacoffee.com; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;";
+    $csp = "default-src 'self'; script-src 'self' 'unsafe-inline' https://api.github.com https://cdnjs.buymeacoffee.com https://js.hcaptcha.com; connect-src 'self' https://api.github.com https://cdnjs.buymeacoffee.com https://hcaptcha.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://hcaptcha.com; font-src 'self' data:; frame-src https://hcaptcha.com;";
     header('Content-Security-Policy: ' . $csp);
 
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {

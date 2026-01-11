@@ -1052,12 +1052,51 @@ function togglePublicSubmitForm() {
             formLoadTimeEl.value = Date.now();
         }
         
+        // Initialize hCaptcha
+        initializeHCaptcha();
+        
         setTimeout(() => {
             const first = document.getElementById('public-map-select');
             if (first) first.focus();
         }, 50);
     }
 }
+
+function initializeHCaptcha() {
+    // Fetch hCaptcha site key from server
+    fetch('php/get_hcaptcha_sitekey.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.sitekey) {
+                const widget = document.getElementById('hcaptcha-widget');
+                if (widget) {
+                    widget.setAttribute('data-sitekey', data.sitekey);
+                    // Render or reset hCaptcha
+                    if (window.hcaptcha) {
+                        window.hcaptcha.render('hcaptcha-widget', {
+                            sitekey: data.sitekey,
+                            theme: 'light'
+                        });
+                    }
+                }
+            }
+        })
+        .catch(err => console.error('Failed to load hCaptcha site key', err));
+}
+
+// Listen for hCaptcha token generation
+document.addEventListener('load', function() {
+    if (window.hcaptcha) {
+        window.hcaptcha.onload = function() {
+            const hcaptchaWidget = document.getElementById('hcaptcha-widget');
+            if (hcaptchaWidget) {
+                hcaptchaWidget.addEventListener('hcaptcha', function(e) {
+                    document.getElementById('h-captcha-response').value = e.detail.response;
+                });
+            }
+        };
+    }
+});
 
 function toggleNewsModal() {
     const overlay = document.getElementById('news-overlay');
@@ -1140,6 +1179,13 @@ async function submitPublicRecord(e) {
     }
 
     try {
+        // Get hCaptcha response token
+        const hcaptchaResponse = document.getElementById('h-captcha-response').value || '';
+        if (!hcaptchaResponse) {
+            if (msgEl) { msgEl.textContent = 'Please complete the hCaptcha verification.'; msgEl.style.color = 'red'; }
+            return;
+        }
+        
         // Collect all honeypot fields
         const hp_email = document.getElementById('hp_email') ? document.getElementById('hp_email').value.trim() : '';
         const hp_website = document.getElementById('hp_website') ? document.getElementById('hp_website').value.trim() : '';
@@ -1155,6 +1201,7 @@ async function submitPublicRecord(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 mapId, vehicleId, distance: Number(distance), playerName, playerCountry,
+                h_captcha_response: hcaptchaResponse,
                 hp_email: hp_email,
                 hp_website: hp_website,
                 hp_phone: hp_phone,
