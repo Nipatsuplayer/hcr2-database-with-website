@@ -330,23 +330,6 @@ mapStarsHTML += `<div class="total-stars-value">${formatDistance(totalMapStars)}
 mapStarsHTML += '</div></div>';
 statsContainer.innerHTML += mapStarsHTML;
 
-// explicitly set star bar fills to ensure accurate rendering on mobile browsers
-try {
-    const mapStarFills = statsContainer.querySelectorAll('.stars-chart .bar-fill');
-    let starIndex = 0;
-    // Skip vehicle stars chart bars
-    const vehicleCharts = statsContainer.querySelectorAll('.stats-section');
-    if (vehicleCharts.length > 0) {
-        const vehicleBarCount = vehicleCharts[0].querySelectorAll('.chart-bar').length;
-        // Get all bar fills and find the ones from the map stars chart (after vehicle ones)
-        const allBarFills = statsContainer.querySelectorAll('.chart-bar .bar-fill');
-        for (let i = vehicleBarCount; i < allBarFills.length && i - vehicleBarCount < sortedMapsByStars.length; i++) {
-            const pct = (sortedMapsByStars[i - vehicleBarCount] && sortedMapsByStars[i - vehicleBarCount][1]) ? (sortedMapsByStars[i - vehicleBarCount][1] / maxMapStars) * 100 : 0;
-            allBarFills[i].style.width = pct.toFixed(2) + '%';
-        }
-    }
-} catch (e) {}
-
 const totalRecords = data.length;
 const totalDistance = data.reduce((sum, record) => sum + record.distance, 0);
 const avgDistance = (totalDistance / totalRecords).toFixed(2);
