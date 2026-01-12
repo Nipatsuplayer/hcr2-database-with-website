@@ -69,6 +69,26 @@ if (!$logged || !$allowed) {
         <p id="delete-message"></p>
     </div>
 
+    <div class="form-container">
+        <h2>Add a Vehicle ➕</h2>
+        <form id="add-vehicle-form" onsubmit="addVehicle(event)">
+            <label>Vehicle Name</label>
+            <input type="text" id="vehicle-name-input" required placeholder="e.g., Jeep">
+            <button type="submit">Add Vehicle</button>
+        </form>
+        <p id="add-vehicle-message"></p>
+    </div>
+
+    <div class="form-container">
+        <h2>Add a Map ➕</h2>
+        <form id="add-map-form" onsubmit="addMap(event)">
+            <label>Map Name</label>
+            <input type="text" id="map-name-input" required placeholder="e.g., Forest Trials">
+            <button type="submit">Add Map</button>
+        </form>
+        <p id="add-map-message"></p>
+    </div>
+
     <div class="form-container" id="pending-submissions-container">
         <h2>Pending Submissions (from users)</h2>
         <div id="pending-list">Loading...</div>
@@ -268,6 +288,74 @@ function showFormMessage(msg, isError) {
 }
 function showDeleteMessage(msg, isError) {
     const el = document.getElementById('delete-message');
+    el.textContent = msg;
+    el.style.color = isError ? 'red' : 'green';
+}
+
+function addVehicle(e) {
+    e.preventDefault();
+    const vehicleName = document.getElementById('vehicle-name-input').value.trim();
+    if (!vehicleName) {
+        showAddVehicleMessage('Please enter a vehicle name.', true);
+        return;
+    }
+    fetch('/php/add_vehicle.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ vehicleName })
+    }).then(async resp => {
+        const data = await resp.json().catch(()=>({ error: 'Invalid server response' }));
+        if (!resp.ok) {
+            showAddVehicleMessage(data.error || 'Server error', true);
+            return;
+        }
+        if (data.success) {
+            showAddVehicleMessage('Vehicle added successfully!', false);
+            document.getElementById('add-vehicle-form').reset();
+            populateFormOptions();
+        } else {
+            showAddVehicleMessage(data.error || 'Unknown error', true);
+        }
+    }).catch(()=> showAddVehicleMessage('Error adding vehicle.', true));
+}
+
+function addMap(e) {
+    e.preventDefault();
+    const mapName = document.getElementById('map-name-input').value.trim();
+    if (!mapName) {
+        showAddMapMessage('Please enter a map name.', true);
+        return;
+    }
+    fetch('/php/add_map.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ mapName })
+    }).then(async resp => {
+        const data = await resp.json().catch(()=>({ error: 'Invalid server response' }));
+        if (!resp.ok) {
+            showAddMapMessage(data.error || 'Server error', true);
+            return;
+        }
+        if (data.success) {
+            showAddMapMessage('Map added successfully!', false);
+            document.getElementById('add-map-form').reset();
+            populateFormOptions();
+        } else {
+            showAddMapMessage(data.error || 'Unknown error', true);
+        }
+    }).catch(()=> showAddMapMessage('Error adding map.', true));
+}
+
+function showAddVehicleMessage(msg, isError) {
+    const el = document.getElementById('add-vehicle-message');
+    el.textContent = msg;
+    el.style.color = isError ? 'red' : 'green';
+}
+
+function showAddMapMessage(msg, isError) {
+    const el = document.getElementById('add-map-message');
     el.textContent = msg;
     el.style.color = isError ? 'red' : 'green';
 }

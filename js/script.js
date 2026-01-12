@@ -281,6 +281,72 @@ mapHTML += '<tr><th>Map Name</th><th>Total Records</th><th>Total Distance</th><t
 mapHTML += '</table></div>';
 statsContainer.innerHTML += mapHTML;
 
+// Calculate map adventure stars
+const mapStars = {};
+data.forEach(record => {
+    if (!mapStars[record.map_name]) {
+        mapStars[record.map_name] = 0;
+    }
+    
+    const isSpecialMap = specialMaps.includes(record.map_name);
+    let stars = 0;
+    
+    if (isSpecialMap) {
+        stars = record.distance >= 5000 ? 15000 : record.distance * 3;
+    } else {
+        stars = record.distance >= 10000 ? 10000 : record.distance;
+    }
+    
+    mapStars[record.map_name] += stars;
+});
+
+const sortedMapsByStars = Object.entries(mapStars)
+    .sort((a, b) => b[1] - a[1]);
+
+let totalMapStars = 0;
+sortedMapsByStars.forEach(m => { totalMapStars += m[1]; });
+
+let mapStarsHTML = '<div class="stats-section"><h3>Map Rankings by Adventure Stars</h3>';
+mapStarsHTML += '<div class="chart-container stars-chart">';
+
+const maxMapStars = Math.max(...sortedMapsByStars.map(m => m[1]));
+sortedMapsByStars.forEach((map, index) => {
+    const barWidth = (map[1] / maxMapStars) * 100;
+    mapStarsHTML += `
+        <div class="chart-bar">
+            <span class="player-rank">${index + 1}.</span>
+            <span class="player-name">${esc(map[0])}</span>
+            <div class="bar-wrap">
+                <div class="bar-fill" style="width: ${barWidth}%; background: linear-gradient(to right, #4287f5ff, #00d4ff);">
+                    <span class="bar-value">${formatDistance(map[1])}</span>
+                </div>
+            </div>
+        </div>
+    `;
+});
+
+mapStarsHTML += `<div class="total-stars"> ⭐ Total Adventure Stars : </div>`;
+mapStarsHTML += `<div class="total-stars-value">${formatDistance(totalMapStars)}</div>`;
+mapStarsHTML += '</div></div>';
+statsContainer.innerHTML += mapStarsHTML;
+
+// explicitly set star bar fills to ensure accurate rendering on mobile browsers
+try {
+    const mapStarFills = statsContainer.querySelectorAll('.stars-chart .bar-fill');
+    let starIndex = 0;
+    // Skip vehicle stars chart bars
+    const vehicleCharts = statsContainer.querySelectorAll('.stats-section');
+    if (vehicleCharts.length > 0) {
+        const vehicleBarCount = vehicleCharts[0].querySelectorAll('.chart-bar').length;
+        // Get all bar fills and find the ones from the map stars chart (after vehicle ones)
+        const allBarFills = statsContainer.querySelectorAll('.chart-bar .bar-fill');
+        for (let i = vehicleBarCount; i < allBarFills.length && i - vehicleBarCount < sortedMapsByStars.length; i++) {
+            const pct = (sortedMapsByStars[i - vehicleBarCount] && sortedMapsByStars[i - vehicleBarCount][1]) ? (sortedMapsByStars[i - vehicleBarCount][1] / maxMapStars) * 100 : 0;
+            allBarFills[i].style.width = pct.toFixed(2) + '%';
+        }
+    }
+} catch (e) {}
+
 const totalRecords = data.length;
 const totalDistance = data.reduce((sum, record) => sum + record.distance, 0);
 const avgDistance = (totalDistance / totalRecords).toFixed(2);
