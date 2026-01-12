@@ -1,5 +1,7 @@
 <?php
-require_once __DIR__ . '/../auth/config.php';
+$require_config = require_once __DIR__ . '/../auth/config.php';
+require_once __DIR__ . '/maintenance_helpers.php';
+enforce_maintenance_json();
 header('Content-Type: application/json; charset=utf-8');
 $db_file = __DIR__ . '/../main.sqlite';
 try {

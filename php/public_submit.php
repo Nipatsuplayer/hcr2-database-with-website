@@ -1,5 +1,7 @@
 <?php
 require_once __DIR__ . '/../auth/config.php';
+require_once __DIR__ . '/maintenance_helpers.php';
+enforce_maintenance_json();
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -8,27 +10,59 @@ function verify_hcaptcha($token, $secret) {
     if (empty($token) || empty($secret)) {
         return false;
     }
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://hcaptcha.com/siteverify');
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+    $url = 'https://hcaptcha.com/siteverify';
+    $postFields = http_build_query([
         'secret' => $secret,
         'response' => $token
-    ]));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode !== 200 || !$response) {
-        return false;
+    ]);
+
+    // Prefer curl if available
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || !$response) {
+            return false;
+        }
+
+        $result = json_decode($response, true);
+        return isset($result['success']) && $result['success'] === true;
     }
-    
-    $result = json_decode($response, true);
-    return isset($result['success']) && $result['success'] === true;
+
+    // Fallback to file_get_contents if allow_url_fopen is enabled
+    if (ini_get('allow_url_fopen')) {
+        $opts = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                'content' => $postFields,
+                'timeout' => 5
+            ],
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+            ]
+        ];
+        $context = stream_context_create($opts);
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) {
+            return false;
+        }
+        $result = json_decode($response, true);
+        return isset($result['success']) && $result['success'] === true;
+    }
+
+    // Neither curl nor file_get_contents available for outbound HTTP
+    error_log('verify_hcaptcha: no HTTP client available (curl missing and allow_url_fopen disabled)');
+    return false;
 }
 
 $db_file = __DIR__ . '/../main.sqlite';

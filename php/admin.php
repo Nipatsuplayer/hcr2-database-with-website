@@ -126,6 +126,17 @@ if (!$logged || !$allowed) {
         </form>
     </div>
 
+    <div class="form-container" id="maintenance-container">
+        <h2>Maintenance Mode</h2>
+        <p id="maintenance-status">Loading...</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" onclick="setMaintenance('enable')" id="maintenance-enable">Enable</button>
+            <button type="button" onclick="setMaintenance('disable')" id="maintenance-disable" style="background:#ccc;color:#000;">Disable</button>
+            <button type="button" onclick="refreshMaintenance()" style="background:#f0f0f0;color:#000;">Refresh</button>
+        </div>
+        <p id="maintenance-message"></p>
+    </div>
+
 <script>
 function esc(input) {
     if (input === null || input === undefined) return '';
@@ -431,6 +442,7 @@ window.onload = () => {
     loadPendingSubmissions();
     loadAdminNews();
     listBackups();
+    refreshMaintenance();
 };
 
 async function postNews(e) {
@@ -554,6 +566,30 @@ async function runIntegrity() {
         const data = await res.json();
         alert('Integrity check result: ' + (data.result || JSON.stringify(data)));
     } catch (err) { console.error(err); alert('Request failed'); }
+}
+
+async function refreshMaintenance() {
+    try {
+        const res = await fetch('/php/maintenance_status.php', { cache: 'no-cache', credentials: 'same-origin' });
+        const j = await res.json();
+        const st = document.getElementById('maintenance-status');
+        if (st) st.textContent = j.maintenance ? 'MAINTENANCE: ON (admins only)' : 'MAINTENANCE: OFF';
+        const msg = document.getElementById('maintenance-message'); if (msg) msg.textContent = '';
+    } catch (e) { console.error(e); }
+}
+
+async function setMaintenance(action) {
+    try {
+        const res = await fetch('/php/set_maintenance.php', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+        const j = await res.json();
+        const msg = document.getElementById('maintenance-message');
+        if (j.success) {
+            if (msg) { msg.style.color = 'green'; msg.textContent = 'Maintenance updated.'; }
+            refreshMaintenance();
+        } else {
+            if (msg) { msg.style.color = 'red'; msg.textContent = j.error || 'Failed to update.'; }
+        }
+    } catch (e) { console.error(e); const msg = document.getElementById('maintenance-message'); if (msg) { msg.style.color='red'; msg.textContent='Request failed'; } }
 }
 </script>
 </body>

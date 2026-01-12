@@ -12,6 +12,38 @@ function esc(input) {
         .replace(/'/g, '&#39;');
 }
 
+// Return ISO2 country code (lowercase) for a given country name or code when possible
+function getCountryCode(country) {
+    if (!country) return null;
+    const c = String(country).trim();
+    if (c.length === 2 && /^[A-Za-z]{2}$/.test(c)) return c.toLowerCase();
+    const norm = c.toLowerCase();
+    const map = {
+        'finland': 'fi', 'sweden': 'se', 'norway': 'no', 'denmark': 'dk', 'germany': 'de', 'france': 'fr',
+        'spain': 'es', 'italy': 'it', 'netherlands': 'nl', 'poland': 'pl', 'russia': 'ru', 'brazil': 'br',
+        'united states': 'us', 'united states of america': 'us', 'usa': 'us', 'canada': 'ca', 'australia': 'au',
+        'japan': 'jp', 'china': 'cn', 'south korea': 'kr', 'korea': 'kr', 'united kingdom': 'gb', 'uk': 'gb',
+        'ireland': 'ie', 'portugal': 'pt', 'belgium': 'be', 'switzerland': 'ch', 'austria': 'at', 'czech republic': 'cz',
+        'slovakia': 'sk', 'hungary': 'hu', 'romania': 'ro', 'bulgaria': 'bg', 'india': 'in', 'mexico': 'mx'
+    };
+    if (map[norm]) return map[norm];
+    // try extracting last word if value like "Republic of X"
+    const last = norm.split(/[,\s]+/).pop();
+    if (map[last]) return map[last];
+    return null;
+}
+
+function renderCountryWithFlag(country) {
+    const code = getCountryCode(country);
+    const name = country || '';
+    if (code) {
+        // Use FlagCDN small PNGs (https://flagcdn.com)
+        const src = `https://flagcdn.com/24x18/${code}.png`;
+        return `<span class="country-cell"><img class="country-flag" src="${src}" alt="${esc(name)} flag"> ${esc(name)}</span>`;
+    }
+    return esc(name || 'Unknown');
+}
+
 function formatDistance(value, decimals = null) {
     if (value === null || value === undefined || value === '') return '';
     const num = Number(value);
@@ -760,12 +792,12 @@ if (dataType === 'maps') {
     tableHTML += '<tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr>';
     records.forEach(item => {
         tableHTML += `<tr>
-                        <td>${formatDistance(item.distance)}</td>
-                        <td>${esc(item.map_name)}</td>
-                        <td>${esc(item.vehicle_name)}</td>
-                        <td>${esc(item.player_name)}</td>
-                        <td>${esc(item.player_country)}</td>
-                        </tr>`;
+                <td>${formatDistance(item.distance)}</td>
+                <td>${esc(item.map_name)}</td>
+                <td>${esc(item.vehicle_name)}</td>
+                <td>${esc(item.player_name)}</td>
+                <td>${renderCountryWithFlag(item.player_country)}</td>
+                </tr>`;
     });
 }
 tableHTML += '</table>';
@@ -1112,40 +1144,59 @@ function togglePublicSubmitForm() {
 }
 
 function initializeHCaptcha() {
-    // Fetch hCaptcha site key from server
+    // Fetch hCaptcha site key from server and render when the hcaptcha script is available
     fetch('php/get_hcaptcha_sitekey.php')
         .then(res => res.json())
         .then(data => {
             if (data.sitekey) {
                 const widget = document.getElementById('hcaptcha-widget');
-                if (widget) {
-                    widget.setAttribute('data-sitekey', data.sitekey);
-                    // Render or reset hCaptcha
-                    if (window.hcaptcha) {
-                        window.hcaptcha.render('hcaptcha-widget', {
-                            sitekey: data.sitekey,
-                            theme: 'light'
-                        });
+                if (!widget) return;
+
+                widget.setAttribute('data-sitekey', data.sitekey);
+
+                const tryRender = () => {
+                    if (window.hcaptcha && typeof window.hcaptcha.render === 'function') {
+                        try {
+                            const renderTarget = widget; // pass element directly
+                            const widgetId = window.hcaptcha.render(renderTarget, {
+                                sitekey: data.sitekey,
+                                theme: 'light',
+                                callback: function(token) {
+                                    const el = document.getElementById('h-captcha-response');
+                                    if (el) el.value = token;
+                                },
+                                'expired-callback': function() {
+                                    const el = document.getElementById('h-captcha-response');
+                                    if (el) el.value = '';
+                                }
+                            });
+                            widget.dataset.hcaptchaWidgetId = widgetId;
+                            return true;
+                        } catch (e) {
+                            console.error('hCaptcha render failed', e);
+                            return false;
+                        }
                     }
+                    return false;
+                };
+
+                if (!tryRender()) {
+                    let attempts = 0;
+                    const maxAttempts = 30;
+                    const iv = setInterval(() => {
+                        attempts++;
+                        if (tryRender() || attempts >= maxAttempts) {
+                            clearInterval(iv);
+                        }
+                    }, 200);
                 }
+            } else {
+                console.error('hCaptcha sitekey not provided by server');
             }
         })
         .catch(err => console.error('Failed to load hCaptcha site key', err));
 }
-
-// Listen for hCaptcha token generation
-document.addEventListener('load', function() {
-    if (window.hcaptcha) {
-        window.hcaptcha.onload = function() {
-            const hcaptchaWidget = document.getElementById('hcaptcha-widget');
-            if (hcaptchaWidget) {
-                hcaptchaWidget.addEventListener('hcaptcha', function(e) {
-                    document.getElementById('h-captcha-response').value = e.detail.response;
-                });
-            }
-        };
-    }
-});
+// token handling is wired via the `callback` option passed to `hcaptcha.render` above
 
 function toggleNewsModal() {
     const overlay = document.getElementById('news-overlay');

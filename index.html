@@ -3,6 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+    (function(){
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/php/maintenance_status.php', false); // synchronous to block render briefly
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.send(null);
+            if (xhr.status === 200) {
+                try {
+                    var info = JSON.parse(xhr.responseText || '{}');
+                    if (info.maintenance && !info.allowed) {
+                        window.location.replace('/maintenance.html');
+                    }
+                } catch (e) {}
+            }
+        } catch (e) {}
+    })();
+    </script>
     <link rel="stylesheet" href="css/style.css">
     <title>HCR2 Database</title>
     <link rel="apple-touch-icon" sizes="180x180" href="img/apple-touch-icon.png">
@@ -12,10 +30,12 @@
     <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body>
+    <!-- maintenance check moved to head for faster redirect -->
     <header>
         <div class="device-note" id="device-note">💻 Works best on laptop / PC for full functionality</div>
         <div class="header-inner">
             <div class="branding">
+                <img src="img/hcrdatabaselogo.png" alt="Logo" id="logo">
                 <div>
                     <h1>HCR2 Adventure Records (unofficial)</h1>
                     <div style="font-size:16px; opacity:0.9;">Community world records & stats</div>
@@ -119,7 +139,7 @@
                     <label>Country (optional)</label>
                     <input type="text" id="public-player-country">
                     <!-- hCaptcha verification -->
-                    <div class="h-captcha" id="hcaptcha-widget" data-sitekey="" required></div>
+                    <div id="hcaptcha-widget" data-sitekey="" required></div>
                     <input type="hidden" id="h-captcha-response" name="h_captcha_response">
                     <!-- Multiple honeypot fields to catch bots (should all remain empty) -->
                     <div style="position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;">

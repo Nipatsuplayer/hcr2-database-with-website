@@ -1,5 +1,8 @@
 <?php
 
+require_once __DIR__ . '/maintenance_helpers.php';
+enforce_maintenance_json();
+
 header('Content-Type: application/json');
 
 $db_file = __DIR__ . '/../main.sqlite';
