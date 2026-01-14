@@ -387,13 +387,13 @@ async function loadPendingSubmissions() {
             container.textContent = 'No pending submissions.';
             return;
         }
-        let html = '<table style="width:100%; border-collapse: collapse;"><tr><th>ID</th><th>Map</th><th>Vehicle</th><th>Distance</th><th>Player</th><th>Country</th><th>When</th><th>Actions</th></tr>';
+        let html = '<table class="admin-pending-table"><thead><tr><th>ID</th><th>Map</th><th>Vehicle</th><th>Distance</th><th>Player</th><th>Country</th><th>When</th><th>Actions</th></tr></thead><tbody>';
         pending.forEach(p => {
             const mapLabel = p.mapName ? p.mapName : p.idMap;
             const vehicleLabel = p.vehicleName ? p.vehicleName : p.idVehicle;
-            html += `<tr style="border-top:1px solid #eee;"><td>${p.id}</td><td>${mapLabel}</td><td>${vehicleLabel}</td><td>${p.distance}</td><td>${p.playerName}</td><td>${p.playerCountry}</td><td>${p.submitted_at}</td><td><button onclick="approveSubmission(${p.id})">Approve</button> <button onclick="rejectSubmission(${p.id})" style="background:#ccc;color:#000;">Reject</button></td></tr>`;
+            html += `<tr><td data-label="ID">${p.id}</td><td data-label="Map">${mapLabel}</td><td data-label="Vehicle">${vehicleLabel}</td><td data-label="Distance">${p.distance}</td><td data-label="Player">${p.playerName}</td><td data-label="Country">${p.playerCountry}</td><td data-label="When">${p.submitted_at}</td><td data-label="Actions"><button onclick="approveSubmission(${p.id})">Approve</button> <button onclick="rejectSubmission(${p.id})" style="background:#ccc;color:#000;">Reject</button></td></tr>`;
         });
-        html += '</table>';
+        html += '</tbody></table>';
         container.innerHTML = html;
     } catch (err) {
         console.error('Failed to load pending submissions', err);
@@ -519,11 +519,11 @@ async function listBackups() {
         const data = await res.json();
         const list = Array.isArray(data.backups) ? data.backups : [];
         if (list.length === 0) { el.textContent = 'No backups found.'; return; }
-        let html = '<table style="width:100%; border-collapse: collapse;"><tr><th>Name</th><th>Size</th><th>Modified</th><th>Actions</th></tr>';
+        let html = '<table class="admin-backups-table"><thead><tr><th>Name</th><th>Size</th><th>Modified</th><th>Actions</th></tr></thead><tbody>';
         list.forEach(b => {
-            html += `<tr style="border-top:1px solid #eee;"><td>${b.name}</td><td>${b.size}</td><td>${b.mtime}</td><td><button onclick="restoreBackup('${b.name}')">Restore</button> <button onclick="deleteBackup('${b.name}')" style="background:#ccc;color:#000;">Delete</button></td></tr>`;
+            html += `<tr><td data-label="Name">${b.name}</td><td data-label="Size">${b.size}</td><td data-label="Modified">${b.mtime}</td><td data-label="Actions"><button onclick="restoreBackup('${b.name}')">Restore</button> <button onclick="deleteBackup('${b.name}')" style="background:#ccc;color:#000;">Delete</button></td></tr>`;
         });
-        html += '</table>';
+        html += '</tbody></table>';
         el.innerHTML = html;
     } catch (err) { console.error(err); el.textContent = 'Failed to load backups.'; }
 }

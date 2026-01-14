@@ -23,8 +23,27 @@ function getCountryCode(country) {
         'spain': 'es', 'italy': 'it', 'netherlands': 'nl', 'poland': 'pl', 'russia': 'ru', 'brazil': 'br',
         'united states': 'us', 'united states of america': 'us', 'usa': 'us', 'canada': 'ca', 'australia': 'au',
         'japan': 'jp', 'china': 'cn', 'south korea': 'kr', 'korea': 'kr', 'united kingdom': 'gb', 'uk': 'gb',
-        'ireland': 'ie', 'portugal': 'pt', 'belgium': 'be', 'switzerland': 'ch', 'austria': 'at', 'czech republic': 'cz',
-        'slovakia': 'sk', 'hungary': 'hu', 'romania': 'ro', 'bulgaria': 'bg', 'india': 'in', 'mexico': 'mx'
+        'ireland': 'ie', 'portugal': 'pt', 'belgium': 'be', 'switzerland': 'ch', 'austria': 'at', 'czechia': 'cz',
+        'slovakia': 'sk', 'hungary': 'hu', 'romania': 'ro', 'bulgaria': 'bg', 'india': 'in', 'mexico': 'mx',
+        'argentina': 'ar', 'chile': 'cl', 'colombia': 'co', 'south africa': 'za', 'new zealand': 'nz',
+        'greece': 'gr', 'turkey': 'tr', 'egypt': 'eg', 'uae': 'ae', 'united arab emirates': 'ae',
+        'saudi arabia': 'sa', 'israel': 'il', 'philippines': 'ph', 'singapore': 'sg', 'malaysia': 'my',
+        'thailand': 'th', 'vietnam': 'vn', 'indonesia': 'id', 'pakistan': 'pk', 'bangladesh': 'bd',
+        'libya': 'ly', 'tunisia': 'tn', 'morocco': 'ma', 'algeria': 'dz', 'venezuela': 've',
+        'peru': 'pe', 'ecuador': 'ec', 'panama': 'pa', 'costa rica': 'cr', 'dominican republic': 'do',
+        'croatia': 'hr', 'serbia': 'rs', 'slovenia': 'si', 'latvia': 'lv', 'lithuania': 'lt', 'estonia': 'ee',
+        'iceland': 'is', 'luxembourg': 'lu', 'monaco': 'mc', 'andorra': 'ad', 'liechtenstein': 'li',
+        'ukraine': 'ua', 'belarus': 'by', 'kazakhstan': 'kz', 'georgia': 'ge', 'armenia': 'am', 'azerbaijan': 'az',
+        'cyprus': 'cy', 'malta': 'mt', 'haiti': 'ht', 'jamaica': 'jm', 'trinidad and tobago': 'tt',
+        'turkiye': 'tr', 'taiwan': 'tw', 'hong kong': 'hk', 'macau': 'mo', 'sri lanka': 'lk', 'nepal': 'np',
+        'bosnia and herzegovina': 'ba', 'north macedonia': 'mk', 'montenegro': 'me', 'kosovo': 'xk',
+        'uzbekistan': 'uz', 'kyrgyzstan': 'kg', 'tajikistan': 'tj', 'afghanistan': 'af', 'iran': 'ir',
+        'iraq': 'iq', 'syria': 'sy', 'lebanon': 'lb', 'jordan': 'jo', 'qatar': 'qa', 'bahrain': 'bh',
+        'kuwait': 'kw', 'oman': 'om', 'yemen': 'ye', 'cuba': 'cu', 'guatemala': 'gt', 'el salvador': 'sv',
+        'honduras': 'hn', 'nicaragua': 'ni', 'bolivia': 'bo', 'paraguay': 'py', 'uruguay': 'uy',
+        'albania': 'al', 'morocco': 'ma', 'senegal': 'sn', 'ghana': 'gh', 'kenya': 'ke', 'uganda': 'ug',
+        'tanzania': 'tz', 'zambia': 'zm', 'zimbabwe': 'zw', 'namibia': 'na', 'botswana': 'bw', 'mozambique': 'mz',
+        'other countries': 'question'
     };
     if (map[norm]) return map[norm];
     // try extracting last word if value like "Republic of X"
@@ -247,7 +266,8 @@ let pieHTML = '<div class="stats-section"><h3>Records by Country</h3><div class=
 pieHTML += '<canvas id="country-pie" width="500" height="375" aria-label="Pie chart showing records by country"></canvas>';
     pieHTML += '<div class="pie-legend">';
 countryEntries.forEach((entry, idx) => {
-    pieHTML += `<div class="legend-item"><span class="legend-color" data-idx="${idx}"></span><span class="legend-label">${esc(entry[0])} (${entry[1]})</span></div>`;
+    const countryFlag = renderCountryWithFlag(entry[0]);
+    pieHTML += `<div class="legend-item"><span class="legend-color" data-idx="${idx}"></span><span class="legend-label">${countryFlag} (${entry[1]})</span></div>`;
 });
 pieHTML += '</div></div></div>';
 statsContainer.innerHTML += pieHTML;
@@ -948,7 +968,7 @@ displayData(filteredData, currentDataType);
 function addPlayerFilters() {
 const container = document.getElementById('data-container');
 const countries = [...new Set(allData.map(p => p.country).filter(c => c && c.trim()))].sort();
-const countryCheckboxes = countries.map(c => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(c)}" onchange="onPlayerFilterChange('country')"> ${esc(c)}</label>`).join('');
+const countryCheckboxes = countries.map(c => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(c)}" onchange="onPlayerFilterChange('country')"> ${renderCountryWithFlag(c)}</label>`).join('');
 
 const searchHTML = `
     <div id="filter-container" class="filter-container">

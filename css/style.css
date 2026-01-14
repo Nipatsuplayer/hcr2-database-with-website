@@ -718,6 +718,55 @@ tr:hover {
   }
 }
 
+/* Tablet optimization: 769px - 1024px - stack filters more efficiently */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .filter-container {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .filter-container input#search-bar {
+    width: 100%;
+    order: 1;
+    min-width: unset !important;
+  }
+
+  .filter-container button#export-btn {
+    width: auto;
+    order: 2;
+    min-width: auto !important;
+  }
+
+  .multi-dropdown {
+    order: 3;
+    margin-left: 0 !important;
+  }
+
+  .multi-dropdown button {
+    min-width: 130px !important;
+  }
+
+  .distance-filter {
+    order: 4;
+    margin-left: 0 !important;
+    width: 100%;
+    flex-direction: row;
+  }
+
+  .distance-filter select,
+  .distance-filter input {
+    flex: 1;
+    min-width: auto !important;
+  }
+
+  .filter-container select#sort-select {
+    order: 5;
+    margin-left: 0 !important;
+    min-width: 140px !important;
+  }
+}
+
 /* === MULTI-DROPDOWN STYLES === */
 
 .multi-dropdown button {
@@ -1031,6 +1080,14 @@ tr:hover {
 .legend-label {
   font-size: 14px;
   color: #222;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.country-flag {
+  vertical-align: middle;
+  display: block;
 }
 
 @media (min-width: 769px) {
@@ -1189,5 +1246,232 @@ tr:hover {
     white-space: normal !important;
     word-break: break-word !important;
     overflow-wrap: anywhere !important;
+  }
+}
+
+/* ================= ADMIN TABLE RESPONSIVE STYLES ================= */
+/* Pending submissions and backups tables on mobile */
+
+.admin-pending-table,
+.admin-backups-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin: 20px 0;
+}
+
+.admin-pending-table thead,
+.admin-backups-table thead {
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
+}
+
+.admin-pending-table th,
+.admin-backups-table th {
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
+  font-weight: 700;
+  color: var(--brand-2);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+  text-align: left;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.admin-pending-table td,
+.admin-backups-table td {
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.admin-pending-table tbody tr,
+.admin-backups-table tbody tr {
+  transition: background-color var(--transition);
+}
+
+.admin-pending-table tbody tr:nth-child(even),
+.admin-backups-table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.admin-pending-table tbody tr:hover,
+.admin-backups-table tbody tr:hover {
+  background: rgba(0, 123, 255, 0.04);
+}
+
+.admin-pending-table button,
+.admin-backups-table button {
+  padding: 6px 12px;
+  margin-right: 6px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.admin-pending-table button[onclick*="approve"],
+.admin-backups-table button[onclick*="restore"] {
+  background: linear-gradient(90deg, var(--brand-1), var(--brand-2));
+  color: #fff;
+}
+
+.admin-pending-table button[onclick*="approve"]:hover,
+.admin-backups-table button[onclick*="restore"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.24);
+}
+
+/* Desktop: normal table layout (769px and up) */
+@media (min-width: 769px) {
+  .admin-pending-table,
+  .admin-backups-table {
+    min-width: 100%;
+    table-layout: auto;
+  }
+
+  .admin-pending-table th,
+  .admin-pending-table td,
+  .admin-backups-table th,
+  .admin-backups-table td {
+    white-space: nowrap;
+  }
+}
+
+/* Tablet optimization (769px - 1024px): Allow some wrapping */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .admin-pending-table,
+  .admin-backups-table {
+    font-size: 13px;
+  }
+
+  .admin-pending-table th,
+  .admin-pending-table td,
+  .admin-backups-table th,
+  .admin-backups-table td {
+    padding: 10px 12px;
+    white-space: normal;
+  }
+
+  .admin-pending-table button,
+  .admin-backups-table button {
+    padding: 5px 10px;
+    font-size: 12px;
+    margin-right: 4px;
+  }
+}
+
+/* Mobile responsive (max 768px): Transform to card-like layout */
+@media (max-width: 768px) {
+  .admin-pending-table,
+  .admin-backups-table {
+    display: block;
+    width: 100%;
+    table-layout: fixed;
+    font-size: 14px;
+  }
+
+  .admin-pending-table thead,
+  .admin-backups-table thead {
+    display: none;
+  }
+
+  .admin-pending-table tbody,
+  .admin-backups-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .admin-pending-table tbody tr,
+  .admin-backups-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+
+  .admin-pending-table tbody tr:nth-child(even),
+  .admin-backups-table tbody tr:nth-child(even) {
+    background: var(--card-bg);
+  }
+
+  .admin-pending-table tbody tr:hover,
+  .admin-backups-table tbody tr:hover {
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.12);
+  }
+
+  .admin-pending-table td,
+  .admin-backups-table td {
+    display: block;
+    padding: 0;
+    border: none;
+    position: relative;
+    padding-left: 100px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+  }
+
+  .admin-pending-table td::before,
+  .admin-backups-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 12px;
+    font-weight: 600;
+    color: var(--brand-2);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 80px;
+    text-align: left;
+  }
+
+  /* Actions row: stack buttons vertically on very small screens */
+  .admin-pending-table td[data-label="Actions"],
+  .admin-backups-table td[data-label="Actions"] {
+    flex-direction: column;
+    align-items: stretch;
+    padding-left: 0;
+  }
+
+  .admin-pending-table td[data-label="Actions"]::before,
+  .admin-backups-table td[data-label="Actions"]::before {
+    position: relative;
+    display: block;
+    margin-bottom: 8px;
+    left: 0;
+  }
+
+  .admin-pending-table button,
+  .admin-backups-table button {
+    width: 100%;
+    padding: 8px 12px;
+    margin-right: 0;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .admin-pending-table button:last-of-type,
+  .admin-backups-table button:last-of-type {
+    margin-bottom: 0;
+  }
+
+  /* Make ID cards distinct */
+  .admin-pending-table td[data-label="ID"],
+  .admin-backups-table td[data-label="Name"] {
+    background: rgba(0, 123, 255, 0.04);
+    border-radius: 6px;
+    font-weight: 600;
+    color: var(--brand-2);
   }
 }
