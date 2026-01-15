@@ -1090,6 +1090,36 @@ tr:hover {
   display: block;
 }
 
+.map-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.map-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  display: inline-block;
+  object-fit: contain;
+}
+
+.vehicle-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+.vehicle-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  display: inline-block;
+  object-fit: contain;
+}
+
 @media (min-width: 769px) {
   .pie-container {
     flex-wrap: nowrap;
@@ -1473,5 +1503,184 @@ tr:hover {
     border-radius: 6px;
     font-weight: 600;
     color: var(--brand-2);
+  }
+}
+
+/* ================= PUBLIC RECORDS TABLE RESPONSIVE ================= */
+
+.public-records-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin: 20px 0;
+}
+
+.public-records-table thead {
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
+}
+
+.public-records-table th {
+  background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
+  font-weight: 700;
+  color: var(--brand-2);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+  text-align: left;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.public-records-table td {
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.public-records-table tbody tr {
+  transition: background-color var(--transition);
+}
+
+.public-records-table tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.public-records-table tbody tr:hover {
+  background: rgba(0, 123, 255, 0.04);
+}
+
+/* Desktop: normal table layout (769px and up) */
+@media (min-width: 769px) {
+  .public-records-table {
+    min-width: 100%;
+    table-layout: auto;
+  }
+
+  .public-records-table th,
+  .public-records-table td {
+    white-space: nowrap;
+  }
+}
+
+/* Tablet optimization (769px - 1024px): Allow some wrapping */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .public-records-table {
+    font-size: 13px;
+  }
+
+  .public-records-table th,
+  .public-records-table td {
+    padding: 10px 12px;
+    white-space: normal;
+  }
+}
+
+/* Mobile responsive (max 768px): Transform to card-like layout */
+@media (max-width: 768px) {
+  .public-records-table {
+    display: block;
+    width: 100%;
+    table-layout: fixed;
+    font-size: 14px;
+  }
+
+  .public-records-table thead {
+    display: none;
+  }
+
+  .public-records-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .public-records-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .public-records-table tbody tr:nth-child(even) {
+    background: var(--card-bg);
+  }
+
+  .public-records-table tbody tr:hover {
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.12);
+  }
+
+  .public-records-table td {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    border: none;
+    position: relative;
+    padding-left: 100px;
+    min-height: 32px;
+  }
+
+  .public-records-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 14px;
+    font-weight: 700;
+    color: var(--brand-2);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 80px;
+    text-align: left;
+  }
+
+  /* Highlight distance (primary metric) */
+  .public-records-table td[data-label="Distance"] {
+    background: rgba(0, 123, 255, 0.04);
+    border-radius: 6px;
+    padding-left: 100px !important;
+    font-weight: 600;
+    color: var(--brand-2);
+    font-size: 16px;
+  }
+
+  .public-records-table td[data-label="Distance"]::before {
+    font-size: 11px;
+  }
+
+  /* Country flag handling */
+  .public-records-table td[data-label="Country"] {
+    padding-left: 100px !important;
+  }
+
+  .public-records-table td[data-label="Country"] .country-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .public-records-table td[data-label="Country"] .country-flag {
+    width: 20px;
+    height: 15px;
+  }
+
+  /* Make other fields readable */
+  .public-records-table td[data-label="Map"],
+  .public-records-table td[data-label="Vehicle"],
+  .public-records-table td[data-label="Player"] {
+    font-weight: 500;
+    color: #333;
+  }
+
+  /* Wrap long text on mobile */
+  .public-records-table td {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
   }
 }

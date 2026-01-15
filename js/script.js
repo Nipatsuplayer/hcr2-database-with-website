@@ -63,6 +63,24 @@ function renderCountryWithFlag(country) {
     return esc(name || 'Unknown');
 }
 
+function renderMapWithIcon(mapName) {
+    if (!mapName) return esc(mapName || 'Unknown');
+    const name = String(mapName).trim();
+    // Convert map name to potential icon filename (lowercase, replace spaces with underscores)
+    const iconName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+    const src = `img/map_icons/${iconName}.png`;
+    return `<span class="map-cell"><img class="map-icon" src="${src}" alt="${esc(name)} icon" onerror="this.style.display='none'"> ${esc(name)}</span>`;
+}
+
+function renderVehicleWithIcon(vehicleName) {
+    if (!vehicleName) return esc(vehicleName || 'Unknown');
+    const name = String(vehicleName).trim();
+    // Convert vehicle name to potential icon filename (lowercase, replace spaces with underscores)
+    const iconName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+    const src = `img/vehicle_icons/${iconName}.png`;
+    return `<span class="vehicle-cell"><img class="vehicle-icon" src="${src}" alt="${esc(name)} icon" onerror="this.style.display='none'"> ${esc(name)}</span>`;
+}
+
 function formatDistance(value, decimals = null) {
     if (value === null || value === undefined || value === '') return '';
     const num = Number(value);
@@ -328,7 +346,7 @@ let mapHTML = '<div class="stats-section"><h3>Map Statistics</h3><table>';
 mapHTML += '<tr><th>Map Name</th><th>Total Records</th><th>Total Distance</th><th>Average Distance</th></tr>';
     sortedMaps.forEach(map => {
     const avgDistanceNum = (map[1].distance / map[1].count);
-    mapHTML += `<tr><td>${esc(map[0])}</td><td>${map[1].count}</td><td>${formatDistance(map[1].distance)}</td><td>${formatDistance(avgDistanceNum, 2)}</td></tr>`;
+    mapHTML += `<tr><td>${renderMapWithIcon(map[0])}</td><td>${map[1].count}</td><td>${formatDistance(map[1].distance)}</td><td>${formatDistance(avgDistanceNum, 2)}</td></tr>`;
 });
 mapHTML += '</table></div>';
 statsContainer.innerHTML += mapHTML;
@@ -364,10 +382,11 @@ mapStarsHTML += '<div class="chart-container stars-chart">';
 const maxMapStars = Math.max(...sortedMapsByStars.map(m => m[1]));
 sortedMapsByStars.forEach((map, index) => {
     const barWidth = (map[1] / maxMapStars) * 100;
+    const mapDisplay = renderMapWithIcon(map[0]);
     mapStarsHTML += `
         <div class="chart-bar">
             <span class="player-rank">${index + 1}.</span>
-            <span class="player-name">${esc(map[0])}</span>
+            <span class="player-name">${mapDisplay}</span>
             <div class="bar-wrap">
                 <div class="bar-fill" style="width: ${barWidth}%; background: linear-gradient(to right, #4287f5ff, #00d4ff);">
                     <span class="bar-value">${formatDistance(map[1])}</span>
@@ -420,7 +439,7 @@ if (sortType === 'total-distance') {
     
     html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Total Distance</th></tr>';
     sortedVehicles.forEach((vehicle, index) => {
-        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${formatDistance(vehicle[1])}</td></tr>`;
+        html += `<tr><td>${index + 1}</td><td>${renderVehicleWithIcon(vehicle[0])}</td><td>${formatDistance(vehicle[1])}</td></tr>`;
     });
 
 } else if (sortType === 'longest-distance') {
@@ -440,7 +459,7 @@ if (sortType === 'total-distance') {
 
     html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Longest Distance</th><th>Map</th></tr>';
     sortedByLongest.forEach((vehicle, index) => {
-        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${formatDistance(vehicle[1].distance)}</td><td>${vehicle[1].map}</td></tr>`;
+        html += `<tr><td>${index + 1}</td><td>${renderVehicleWithIcon(vehicle[0])}</td><td>${formatDistance(vehicle[1].distance)}</td><td>${renderMapWithIcon(vehicle[1].map)}</td></tr>`;
     });
 
 } else if (sortType === 'avg-placement') {
@@ -482,7 +501,7 @@ if (sortType === 'total-distance') {
 
     html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Average Placement</th></tr>';
     sortedByAvgPlacement.forEach((vehicle, index) => {
-        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>${vehicle[1].avgPlacement.toFixed(2)}</td></tr>`;
+        html += `<tr><td>${index + 1}</td><td>${renderVehicleWithIcon(vehicle[0])}</td><td>${vehicle[1].avgPlacement.toFixed(2)}</td></tr>`;
     });
 
 } else if (sortType === 'highest-placement') {
@@ -523,7 +542,7 @@ if (sortType === 'total-distance') {
     html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Best Placement</th><th>Maps</th></tr>';
     sortedByHighest.forEach((vehicle, index) => {
         const mapsStr = vehicle[1].maps.join(', ');
-        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>#${vehicle[1].placement}</td><td>${mapsStr}</td></tr>`;
+        html += `<tr><td>${index + 1}</td><td>${renderVehicleWithIcon(vehicle[0])}</td><td>#${vehicle[1].placement}</td><td>${mapsStr}</td></tr>`;
     });
 
 } else if (sortType === 'lowest-placement') {
@@ -563,7 +582,7 @@ if (sortType === 'total-distance') {
     html += '<tr><th>Rank</th><th>Vehicle Name</th><th>Worst Placement</th><th>Maps</th></tr>';
     sortedByLowest.forEach((vehicle, index) => {
         const mapsStr = vehicle[1].maps.join(', ');
-        html += `<tr><td>${index + 1}</td><td>${vehicle[0]}</td><td>#${vehicle[1].placement}</td><td>${mapsStr}</td></tr>`;
+        html += `<tr><td>${index + 1}</td><td>${renderVehicleWithIcon(vehicle[0])}</td><td>#${vehicle[1].placement}</td><td>${mapsStr}</td></tr>`;
     });
 }
 
@@ -758,16 +777,20 @@ if (data.length === 0) {
     return;
 }
 
-let tableHTML = '<table>';
+let tableHTML = '<table';
+if (dataType === 'records') {
+    tableHTML += ' class="public-records-table"';
+}
+tableHTML += '>';
 if (dataType === 'maps') {
     tableHTML += '<tr><th>Map ID</th><th>Map Name</th></tr>';
     data.forEach(item => {
-        tableHTML += `<tr><td>${item.idMap}</td><td>${item.nameMap}</td></tr>`;
+        tableHTML += `<tr><td>${item.idMap}</td><td>${renderMapWithIcon(item.nameMap)}</td></tr>`;
     });
 } else if (dataType === 'vehicles') {
     tableHTML += '<tr><th>Vehicle ID</th><th>Vehicle Name</th></tr>';
     data.forEach(item => {
-        tableHTML += `<tr><td>${item.idVehicle}</td><td>${item.nameVehicle}</td></tr>`;
+        tableHTML += `<tr><td>${item.idVehicle}</td><td>${renderVehicleWithIcon(item.nameVehicle)}</td></tr>`;
     });
 } else if (dataType === 'players') {
     tableHTML += '<tr><th>Player ID</th><th>Player Name</th><th>Country</th><th>World Records</th></tr>';
@@ -809,16 +832,17 @@ if (dataType === 'maps') {
         });
     }
 
-    tableHTML += '<tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr>';
+    tableHTML += '<thead><tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr></thead><tbody>';
     records.forEach(item => {
         tableHTML += `<tr>
-                <td>${formatDistance(item.distance)}</td>
-                <td>${esc(item.map_name)}</td>
-                <td>${esc(item.vehicle_name)}</td>
-                <td>${esc(item.player_name)}</td>
-                <td>${renderCountryWithFlag(item.player_country)}</td>
+                <td data-label="Distance">${formatDistance(item.distance)}</td>
+                <td data-label="Map">${renderMapWithIcon(item.map_name)}</td>
+                <td data-label="Vehicle">${renderVehicleWithIcon(item.vehicle_name)}</td>
+                <td data-label="Player">${esc(item.player_name)}</td>
+                <td data-label="Country">${renderCountryWithFlag(item.player_country)}</td>
                 </tr>`;
     });
+    tableHTML += '</tbody>';
 }
 tableHTML += '</table>';
 container.innerHTML += tableHTML;
@@ -830,8 +854,8 @@ const container = document.getElementById('data-container');
 const maps = [...new Set(allData.map(record => record.map_name))].filter(Boolean).sort();
 const vehicles = [...new Set(allData.map(record => record.vehicle_name))].filter(Boolean).sort();
 
-const mapCheckboxes = maps.map(m => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(m)}" onchange="onMultiFilterChange('map')"> ${esc(m)}</label>`).join('');
-const vehicleCheckboxes = vehicles.map(v => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(v)}" onchange="onMultiFilterChange('vehicle')"> ${esc(v)}</label>`).join('');
+const mapCheckboxes = maps.map(m => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(m)}" onchange="onMultiFilterChange('map')"> ${renderMapWithIcon(m)}</label>`).join('');
+const vehicleCheckboxes = vehicles.map(v => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(v)}" onchange="onMultiFilterChange('vehicle')"> ${renderVehicleWithIcon(v)}</label>`).join('');
 
 const searchHTML = `
     <div id="filter-container" class="filter-container">
