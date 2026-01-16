@@ -57,7 +57,7 @@
                     <button onclick="fetchData('records')">Get Records</button>
                     <button onclick="fetchStats()">Stats</button>
                     <button onclick="togglePublicSubmitForm()">Submit Record</button>
-                    <button onclick="toggleNewsModal()">News</button>
+                    <span id="news-btn-container"><button onclick="toggleNewsModal()">News</button></span>
 
                     <button id="login-btn" class="discord-btn" onclick="location.href='auth/discord_login.php'">
                         <img class="discord-logo" src="img/Discord-Symbol-Blurple.png" alt="Discord">
@@ -66,6 +66,7 @@
 
                     <button id="admin-btn" style="display:none;">Admin</button>
                     <button id="logout-btn" onclick="location.href='auth/logout.php'" style="display:none;">Logout</button>
+                    <button id="dark-mode-toggle" class="dark-mode-btn" onclick="toggleDarkMode()" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
                 </div>
             </nav>
         </div>
@@ -168,7 +169,7 @@
                 <div id="news-list" style="max-height:60vh; overflow:auto; text-align:left;">
                     <p>Loading news...</p>
                 </div>
-                <div style="text-align:right; margin-top:12px;"><button onclick="toggleNewsModal()" style="background:#ccc;color:#000;">Close</button></div>
+                <div style="text-align:right; margin-top:12px;"><button class="close-news-btn" onclick="toggleNewsModal()">Close</button></div>
             </div>
         </div>
         <footer id="footer">

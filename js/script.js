@@ -2,6 +2,87 @@ let allData = [];
 let currentDataType = ''; 
 let allPlayers = []; 
 
+// =============== DARK MODE TOGGLE ===============
+function initDarkMode() {
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode === 'true') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        updateDarkModeButton(true);
+    }
+}
+
+function toggleDarkMode() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('darkMode', 'false');
+        updateDarkModeButton(false);
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('darkMode', 'true');
+        updateDarkModeButton(true);
+    }
+}
+
+function updateDarkModeButton(isDark) {
+    const btn = document.getElementById('dark-mode-toggle');
+    if (btn) {
+        btn.textContent = isDark ? '☀️' : '🌙';
+    }
+}
+
+// Initialize dark mode on page load
+document.addEventListener('DOMContentLoaded', initDarkMode);
+
+// =============== NEWS INDICATOR ===============
+function updateNewsIndicator() {
+    const newsBtn = document.getElementById('news-btn-container');
+    if (!newsBtn) return;
+    
+    const unreadNews = localStorage.getItem('unreadNews');
+    let indicator = newsBtn.querySelector('.news-indicator');
+    
+    if (unreadNews === 'true') {
+        if (!indicator) {
+            indicator = document.createElement('span');
+            indicator.className = 'news-indicator';
+            newsBtn.appendChild(indicator);
+        }
+        indicator.style.display = 'block';
+    } else {
+        if (indicator) {
+            indicator.style.display = 'none';
+        }
+    }
+}
+
+function markNewsAsRead() {
+    localStorage.setItem('unreadNews', 'false');
+    updateNewsIndicator();
+}
+
+// Initialize news indicator on page load
+document.addEventListener('DOMContentLoaded', updateNewsIndicator);
+
+// =============== LAZY LOAD SVG ICONS ===============
+function lazyLoadImages() {
+    const images = document.querySelectorAll('img[data-src]');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                observer.unobserve(img);
+            }
+        });
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+}
+
+document.addEventListener('DOMContentLoaded', lazyLoadImages);
+
 function esc(input) {
     if (input === null || input === undefined) return '';
     return String(input)
@@ -801,7 +882,7 @@ if (dataType === 'maps') {
     tableHTML += '<tr><th>Player ID</th><th>Player Name</th><th>Country</th><th>World Records</th></tr>';
     data.forEach(item => {
         const recordCount = window.playerRecordCounts ? (window.playerRecordCounts[item.namePlayer] || 0) : 0;
-        tableHTML += `<tr><td>${item.idPlayer}</td><td>${esc(item.namePlayer)}</td><td>${esc(item.country || 'Unknown')}</td><td>${recordCount}</td></tr>`;
+        tableHTML += `<tr><td>${item.idPlayer}</td><td>${esc(item.namePlayer)}</td><td>${renderCountryWithFlag(item.country)}</td><td>${recordCount}</td></tr>`;
     });
 } else if (dataType === 'records') {
     const sortSelect = document.getElementById('sort-select');
@@ -1255,6 +1336,7 @@ function toggleNewsModal() {
         overlay.style.display = 'none';
     } else {
         overlay.style.display = 'block';
+        markNewsAsRead();
         loadNews();
     }
 }
