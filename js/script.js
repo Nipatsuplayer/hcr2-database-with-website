@@ -149,8 +149,8 @@ function renderMapWithIcon(mapName) {
     const name = String(mapName).trim();
     // Convert map name to potential icon filename (lowercase, replace spaces with underscores)
     const iconName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
-    const svgSrc = `img/map_icons/${iconName}.svg`;
-    const pngSrc = `img/map_icons/${iconName}.png`;
+    const svgSrc = `/img/map_icons/${iconName}.svg`;
+    const pngSrc = `/img/map_icons/${iconName}.png`;
     // Try SVG first, fall back to PNG on error
     return `<span class="map-cell"><img class="map-icon" src="${svgSrc}" alt="${esc(name)} icon" onerror="this.src='${pngSrc}'; this.onerror=null; if(!this.complete) this.style.display='none';"> ${esc(name)}</span>`;
 }
@@ -160,8 +160,8 @@ function renderVehicleWithIcon(vehicleName) {
     const name = String(vehicleName).trim();
     // Convert vehicle name to potential icon filename (lowercase, replace spaces with underscores)
     const iconName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
-    const svgSrc = `img/vehicle_icons/${iconName}.svg`;
-    const pngSrc = `img/vehicle_icons/${iconName}.png`;
+    const svgSrc = `/img/vehicle_icons/${iconName}.svg`;
+    const pngSrc = `/img/vehicle_icons/${iconName}.png`;
     // Try SVG first, fall back to PNG on error
     return `<span class="vehicle-cell"><img class="vehicle-icon" src="${svgSrc}" alt="${esc(name)} icon" onerror="this.src='${pngSrc}'; this.onerror=null; if(!this.complete) this.style.display='none';"> ${esc(name)}</span>`;
 }
