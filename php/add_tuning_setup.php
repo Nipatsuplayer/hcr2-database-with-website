@@ -18,8 +18,8 @@ if (!is_array($data)) {
 }
 
 $partIds = $data['partIds'] ?? [];
-if (!is_array($partIds) || count($partIds) < 2 || count($partIds) > 4) {
-    echo json_encode(['error' => 'Must select 2 to 4 tuning parts.']);
+if (!is_array($partIds) || count($partIds) < 3 || count($partIds) > 4) {
+    echo json_encode(['error' => 'Must select 3 or 4 tuning parts.']);
     exit;
 }
 

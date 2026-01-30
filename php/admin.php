@@ -116,7 +116,7 @@ if (!$logged || !$allowed) {
     <div class="form-container">
         <h2>Add Tuning Setup ➕</h2>
         <form id="add-tuning-setup-form" onsubmit="addTuningSetup(event)">
-            <label>Select Tuning Parts (2-4)</label>
+            <label>Select Tuning Parts (3-4)</label>
             <div id="tuning-parts-checkboxes"></div>
             <button type="submit">Add Tuning Setup</button>
         </form>
@@ -220,10 +220,7 @@ function populateFormOptions() {
         container.innerHTML = '';
         (data || []).forEach(p => {
             const label = document.createElement('label');
-            const iconName = p.nameTuningPart.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
-            const svgSrc = `/img/tuning_parts_icons/${iconName}.svg`;
-            const pngSrc = `/img/tuning_parts_icons/${iconName}.png`;
-            label.innerHTML = `<input type="checkbox" value="${p.idTuningPart}"><img class="admin-tuning-icon" src="${svgSrc}" alt="${esc(p.nameTuningPart)} icon" onerror="this.src='${pngSrc}'; this.onerror=null; if(!this.complete) this.style.display='none';"> ${esc(p.nameTuningPart)}`;
+            label.innerHTML = `<input type="checkbox" value="${p.idTuningPart}"> <span>${esc(p.nameTuningPart)}</span>`;
             container.appendChild(label);
         });
     });
@@ -368,6 +365,8 @@ function deleteRecord(e) {
         }
     }).catch(()=> showDeleteMessage('Error deleting record.', true));
 }
+
+// Assign tuning setup to existing record
 
 function assignSetup(e) {
     e.preventDefault();

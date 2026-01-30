@@ -1496,26 +1496,44 @@ tr:hover {
 }
 
 .admin-tuning-icon {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   vertical-align: middle;
-  display: inline-block;
+  display: none;
   object-fit: contain;
   flex-shrink: 0;
 }
 
 /* Admin tuning part checkboxes */
+#tuning-parts-checkboxes {
+  
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
 #tuning-parts-checkboxes label {
   display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  margin-bottom: 4px !important;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap; /* prevent label text from wrapping to the next line */
   cursor: pointer;
+  font-weight: normal;
+  font-size: 13px;
+  margin: 0;
+  padding: 4px 6px;
+  width: 100%; /* make each label take full panel width so checkbox stays left */
+  box-sizing: border-box;
 }
 
 #tuning-parts-checkboxes input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
+  margin-right: 6px;
+  width: auto !important;
+  flex-shrink: 0;
+}
+
+#tuning-parts-checkboxes span {
+  vertical-align: middle;
 }
 
 @media (max-width: 768px) {
@@ -1527,12 +1545,9 @@ tr:hover {
     margin-left: 4px;
   }
   
-  .admin-tuning-icon {
-    margin-left: 2px;
-  }
-  
   #tuning-parts-checkboxes label {
     gap: 6px !important;
+    margin-bottom: 5px !important;
   }
 }
 
