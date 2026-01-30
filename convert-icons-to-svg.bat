@@ -30,26 +30,39 @@ if not exist "img\vehicle_icons" (
     exit /b 1
 )
 
+if not exist "img\tuning_parts_icons" (
+    color 0C
+    echo ERROR: tuning_parts_icons directory not found!
+    echo This script must be run from the project root directory.
+    pause
+    exit /b 1
+)
+
 echo Directories found:
 echo - img\map_icons
 echo - img\vehicle_icons
+echo - img\tuning_parts_icons
 echo.
 
 REM Count PNG files
 setlocal enabledelayedexpansion
 set "map_count=0"
 set "vehicle_count=0"
+set "tuning_count=0"
 
 for /F %%A in ('dir /b "img\map_icons\*.png" 2^>nul ^| find /c /v ""') do set "map_count=%%A"
 for /F %%A in ('dir /b "img\vehicle_icons\*.png" 2^>nul ^| find /c /v ""') do set "vehicle_count=%%A"
+for /F %%A in ('dir /b "img\tuning_parts_icons\*.png" 2^>nul ^| find /c /v ""') do set "tuning_count=%%A"
 
 if "!map_count!"=="" set "map_count=0"
 if "!vehicle_count!"=="" set "vehicle_count=0"
+if "!tuning_count!"=="" set "tuning_count=0"
 
-set /a "total_count=map_count+vehicle_count"
+set /a "total_count=map_count+vehicle_count+tuning_count"
 
 echo Found !map_count! map icon PNG files
 echo Found !vehicle_count! vehicle icon PNG files
+echo Found !tuning_count! tuning parts icon PNG files
 echo Total: !total_count! files to convert
 echo.
 
@@ -89,6 +102,7 @@ if "!choice!"=="1" (
     echo 2. Upload PNG files from:
     echo    - img\map_icons\*.png
     echo    - img\vehicle_icons\*.png
+    echo    - img\tuning_parts_icons\*.png
     echo 3. Download the converted SVG files
     echo 4. Save them to the same directories (overwrite is OK)
     echo 5. The code will automatically use SVG files if available
