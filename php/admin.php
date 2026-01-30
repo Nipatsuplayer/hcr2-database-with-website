@@ -47,6 +47,8 @@ if (!$logged || !$allowed) {
             <select id="vehicle-select" required></select>
             <label>Distance</label>
             <input type="number" id="distance-input" required>
+            <label>Tuning Setup (optional)</label>
+            <select id="tuning-setup-select"></select>
             <label>Existing Player</label>
             <input type="text" id="player-filter" placeholder="Filter players..." oninput="filterPlayers()">
             <select id="player-select" onchange="handlePlayerSelection()"><option value="">Select existing player</option></select>
@@ -87,6 +89,26 @@ if (!$logged || !$allowed) {
             <button type="submit">Add Map</button>
         </form>
         <p id="add-map-message"></p>
+    </div>
+
+    <div class="form-container">
+        <h2>Add Tuning Part ➕</h2>
+        <form id="add-tuning-part-form" onsubmit="addTuningPart(event)">
+            <label>Tuning Part Name</label>
+            <input type="text" id="tuning-part-name-input" required placeholder="e.g., Turbo">
+            <button type="submit">Add Tuning Part</button>
+        </form>
+        <p id="add-tuning-part-message"></p>
+    </div>
+
+    <div class="form-container">
+        <h2>Add Tuning Setup ➕</h2>
+        <form id="add-tuning-setup-form" onsubmit="addTuningSetup(event)">
+            <label>Select Tuning Parts (2-4)</label>
+            <div id="tuning-parts-checkboxes"></div>
+            <button type="submit">Add Tuning Setup</button>
+        </form>
+        <p id="add-tuning-setup-message"></p>
     </div>
 
     <div class="form-container" id="pending-submissions-container">
@@ -173,6 +195,24 @@ function populateFormOptions() {
         sel.innerHTML = '<option value="">Select existing player</option>';
         allPlayers.forEach(p => sel.appendChild(new Option(p.namePlayer, p.idPlayer)));
     });
+    fetchJSON('/php/load_data.php?type=tuning_setups').then(data => {
+        const sel = document.getElementById('tuning-setup-select');
+        sel.innerHTML = '<option value="">No tuning setup</option>';
+        (data || []).forEach(s => {
+            const parts = s.parts ? s.parts.map(p => p.nameTuningPart).join(', ') : '';
+            sel.appendChild(new Option(`Setup ${s.idTuningSetup}: ${parts}`, s.idTuningSetup));
+        });
+    });
+    fetchJSON('/php/load_data.php?type=tuning_parts').then(data => {
+        const container = document.getElementById('tuning-parts-checkboxes');
+        container.innerHTML = '';
+        (data || []).forEach(p => {
+            const label = document.createElement('label');
+            label.style.display = 'block';
+            label.innerHTML = `<input type="checkbox" value="${p.idTuningPart}"> ${p.nameTuningPart}`;
+            container.appendChild(label);
+        });
+    });
     populateDeleteOptions();
 }
 
@@ -223,6 +263,7 @@ function submitRecord(e) {
     const mapId = document.getElementById('map-select').value;
     const vehicleId = document.getElementById('vehicle-select').value;
     const distance = document.getElementById('distance-input').value;
+    const tuningSetupId = document.getElementById('tuning-setup-select').value;
     const playerId = document.getElementById('player-select').value;
     const newPlayerName = document.getElementById('new-player-input').value;
     const country = document.getElementById('country-input').value;
@@ -239,7 +280,7 @@ function submitRecord(e) {
     }
 
     const hasPlayerId = (playerId !== null && playerId !== undefined && playerId !== '');
-    const formData = hasPlayerId ? { mapId, vehicleId, distance, playerId, playerName: selectedPlayerName } : { mapId, vehicleId, distance, playerId: null, newPlayerName, country };
+    const formData = hasPlayerId ? { mapId, vehicleId, distance, tuningSetupId: tuningSetupId || null, playerId, playerName: selectedPlayerName } : { mapId, vehicleId, distance, tuningSetupId: tuningSetupId || null, playerId: null, newPlayerName, country };
 
     fetch('/php/submit_record.php', {
         method: 'POST',
@@ -367,6 +408,75 @@ function showAddVehicleMessage(msg, isError) {
 
 function showAddMapMessage(msg, isError) {
     const el = document.getElementById('add-map-message');
+    el.textContent = msg;
+    el.style.color = isError ? 'red' : 'green';
+}
+
+function addTuningPart(e) {
+    e.preventDefault();
+    const partName = document.getElementById('tuning-part-name-input').value.trim();
+    if (!partName) {
+        showAddTuningPartMessage('Please enter a tuning part name.', true);
+        return;
+    }
+    fetch('/php/add_tuning_part.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ partName })
+    }).then(async resp => {
+        const data = await resp.json().catch(()=>({ error: 'Invalid server response' }));
+        if (!resp.ok) {
+            showAddTuningPartMessage(data.error || 'Server error', true);
+            return;
+        }
+        if (data.success) {
+            showAddTuningPartMessage('Tuning part added successfully!', false);
+            document.getElementById('add-tuning-part-form').reset();
+            populateFormOptions();
+        } else {
+            showAddTuningPartMessage(data.error || 'Unknown error', true);
+        }
+    }).catch(()=> showAddTuningPartMessage('Error adding tuning part.', true));
+}
+
+function addTuningSetup(e) {
+    e.preventDefault();
+    const checkboxes = document.querySelectorAll('#tuning-parts-checkboxes input[type="checkbox"]:checked');
+    const partIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    if (partIds.length < 2 || partIds.length > 4) {
+        showAddTuningSetupMessage('Please select 2 to 4 tuning parts.', true);
+        return;
+    }
+    fetch('/php/add_tuning_setup.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ partIds })
+    }).then(async resp => {
+        const data = await resp.json().catch(()=>({ error: 'Invalid server response' }));
+        if (!resp.ok) {
+            showAddTuningSetupMessage(data.error || 'Server error', true);
+            return;
+        }
+        if (data.success) {
+            showAddTuningSetupMessage('Tuning setup added successfully!', false);
+            checkboxes.forEach(cb => cb.checked = false);
+            populateFormOptions();
+        } else {
+            showAddTuningSetupMessage(data.error || 'Unknown error', true);
+        }
+    }).catch(()=> showAddTuningSetupMessage('Error adding tuning setup.', true));
+}
+
+function showAddTuningPartMessage(msg, isError) {
+    const el = document.getElementById('add-tuning-part-message');
+    el.textContent = msg;
+    el.style.color = isError ? 'red' : 'green';
+}
+
+function showAddTuningSetupMessage(msg, isError) {
+    const el = document.getElementById('add-tuning-setup-message');
     el.textContent = msg;
     el.style.color = isError ? 'red' : 'green';
 }

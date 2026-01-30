@@ -24,6 +24,7 @@ $playerId = $data['playerId'] ?? null;
 $newPlayerName = $data['newPlayerName'] ?? null;
 $country = $data['country'] ?? null;
 $playerName = $data['playerName'] ?? null;
+$tuningSetupId = $data['tuningSetupId'] ?? null;
 
 try {
     header('Content-Type: application/json; charset=utf-8');
@@ -82,8 +83,8 @@ try {
     $stmt = $db->prepare("DELETE FROM WorldRecord WHERE idMap = :idMap AND idVehicle = :idVehicle");
     $stmt->execute([':idMap' => $mapId, ':idVehicle' => $vehicleId]);
 
-    $stmt = $db->prepare("INSERT INTO WorldRecord (idMap, idVehicle, idPlayer, distance, current) VALUES (:idMap, :idVehicle, :idPlayer, :distance, 1)");
-    $stmt->execute([':idMap' => $mapId, ':idVehicle' => $vehicleId, ':idPlayer' => $playerId, ':distance' => $distance]);
+    $stmt = $db->prepare("INSERT INTO WorldRecord (idMap, idVehicle, idPlayer, distance, current, idTuningSetup) VALUES (:idMap, :idVehicle, :idPlayer, :distance, 1, :idTuningSetup)");
+    $stmt->execute([':idMap' => $mapId, ':idVehicle' => $vehicleId, ':idPlayer' => $playerId, ':distance' => $distance, ':idTuningSetup' => $tuningSetupId]);
 
     $db->commit();
 

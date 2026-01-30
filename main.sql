@@ -1006,3 +1006,22 @@ INSERT INTO "WorldRecord" VALUES(18,14,24,24105,1);
 INSERT INTO "WorldRecord" VALUES(11,14,10,16160,1);
 INSERT INTO "WorldRecord" VALUES(4,31,180,16235,1);
 COMMIT;
+
+CREATE TABLE TuningPart(
+    idTuningPart INTEGER PRIMARY KEY,
+    nameTuningPart TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE TuningSetup(
+    idTuningSetup INTEGER PRIMARY KEY
+);
+
+CREATE TABLE TuningSetupParts(
+    idTuningSetup INTEGER NOT NULL,
+    idTuningPart INTEGER NOT NULL,
+    PRIMARY KEY (idTuningSetup, idTuningPart),
+    FOREIGN KEY (idTuningSetup) REFERENCES TuningSetup(idTuningSetup),
+    FOREIGN KEY (idTuningPart) REFERENCES TuningPart(idTuningPart)
+);
+
+ALTER TABLE WorldRecord ADD COLUMN idTuningSetup INTEGER NULL REFERENCES TuningSetup(idTuningSetup);

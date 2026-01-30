@@ -166,6 +166,26 @@ function renderVehicleWithIcon(vehicleName) {
     return `<span class="vehicle-cell"><img class="vehicle-icon" src="${svgSrc}" alt="${esc(name)} icon" onerror="this.src='${pngSrc}'; this.onerror=null; if(!this.complete) this.style.display='none';"> ${esc(name)}</span>`;
 }
 
+function renderTuningParts(partsString) {
+    if (!partsString || partsString.trim() === '') return '';
+    const parts = partsString.split(', ').map(p => p.trim()).filter(p => p);
+    return parts.map(part => {
+        const iconName = part.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+        const svgSrc = `/img/tuning_parts_icons/${iconName}.svg`;
+        const pngSrc = `/img/tuning_parts_icons/${iconName}.png`;
+        return `<img class="tuning-part-icon" src="${svgSrc}" alt="${esc(part)}" title="${esc(part)}" onerror="this.src='${pngSrc}'; this.onerror=null; if(!this.complete) this.style.display='none';">`;
+    }).join(' ');
+}
+
+function renderTuningPartWithIcon(partName) {
+    if (!partName) return esc(partName || 'Unknown');
+    const name = String(partName).trim();
+    const iconName = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+    const svgSrc = `/img/tuning_parts_icons/${iconName}.svg`;
+    const pngSrc = `/img/tuning_parts_icons/${iconName}.png`;
+    return `<span class="tuning-part-cell"><img class="tuning-part-icon" src="${svgSrc}" alt="${esc(name)} icon" onerror="this.src='${pngSrc}'; this.onerror=null; if(!this.complete) this.style.display='none';"> ${esc(name)}</span>`;
+}
+
 function formatDistance(value, decimals = null) {
     if (value === null || value === undefined || value === '') return '';
     const num = Number(value);
@@ -884,6 +904,11 @@ if (dataType === 'maps') {
         const recordCount = window.playerRecordCounts ? (window.playerRecordCounts[item.namePlayer] || 0) : 0;
         tableHTML += `<tr><td>${item.idPlayer}</td><td>${esc(item.namePlayer)}</td><td>${renderCountryWithFlag(item.country)}</td><td>${recordCount}</td></tr>`;
     });
+} else if (dataType === 'tuning_parts') {
+    tableHTML += '<tr><th>ID</th><th>Tuning Part Name</th></tr>';
+    data.forEach(item => {
+        tableHTML += `<tr><td>${item.idTuningPart}</td><td>${renderTuningPartWithIcon(item.nameTuningPart)}</td></tr>`;
+    });
 } else if (dataType === 'records') {
     const sortSelect = document.getElementById('sort-select');
     const sortVal = sortSelect ? sortSelect.value : 'default';
@@ -903,6 +928,13 @@ if (dataType === 'maps') {
         records.sort((a, b) => Number(a.distance) - Number(b.distance));
     } else if (sortVal === 'dist-desc') {
         records.sort((a, b) => Number(b.distance) - Number(a.distance));
+    } else if (sortVal === 'most-recent') {
+        records.sort((a, b) => {
+            const aId = a.idRecord ?? a.record_id ?? 0;
+            const bId = b.idRecord ?? b.record_id ?? 0;
+            // Higher ID = more recent, so sort descending
+            return Number(bId) - Number(aId);
+        });
     } else {
         records.sort((a, b) => {
             const ai = getMapId(a), bi = getMapId(b);
@@ -918,12 +950,13 @@ if (dataType === 'maps') {
         });
     }
 
-    tableHTML += '<thead><tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Player Name</th><th>Player Country</th></tr></thead><tbody>';
+    tableHTML += '<thead><tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Tuning Parts</th><th>Player Name</th><th>Player Country</th></tr></thead><tbody>';
     records.forEach(item => {
         tableHTML += `<tr>
                 <td data-label="Distance">${formatDistance(item.distance)}</td>
                 <td data-label="Map">${renderMapWithIcon(item.map_name)}</td>
                 <td data-label="Vehicle">${renderVehicleWithIcon(item.vehicle_name)}</td>
+                <td data-label="Tuning Parts">${renderTuningParts(item.tuning_parts)}</td>
                 <td data-label="Player">${esc(item.player_name)}</td>
                 <td data-label="Country">${renderCountryWithFlag(item.player_country)}</td>
                 </tr>`;
@@ -939,9 +972,11 @@ function addSearchAndFilter() {
 const container = document.getElementById('data-container');
 const maps = [...new Set(allData.map(record => record.map_name))].filter(Boolean).sort();
 const vehicles = [...new Set(allData.map(record => record.vehicle_name))].filter(Boolean).sort();
+const tuningParts = [...new Set(allData.flatMap(record => record.tuning_parts ? record.tuning_parts.split(', ').map(p => p.trim()) : []))].filter(Boolean).sort();
 
 const mapCheckboxes = maps.map(m => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(m)}" onchange="onMultiFilterChange('map')"> ${renderMapWithIcon(m)}</label>`).join('');
 const vehicleCheckboxes = vehicles.map(v => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(v)}" onchange="onMultiFilterChange('vehicle')"> ${renderVehicleWithIcon(v)}</label>`).join('');
+const tuningPartCheckboxes = tuningParts.map(p => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(p)}" onchange="onMultiFilterChange('tuning')"> ${renderTuningPartWithIcon(p)}</label>`).join('');
 
 const searchHTML = `
     <div id="filter-container" class="filter-container">
@@ -964,10 +999,19 @@ const searchHTML = `
             </div>
         </div>
 
+        <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
+            <button id="tuning-btn" onclick="toggleDropdown('tuning')" type="button">Filter by Tuning Parts</button>
+            <div id="tuning-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Tuning Parts</strong><button type="button" onclick="clearMultiFilter('tuning')" style="font-size:12px;">Clear</button></div>
+                ${tuningPartCheckboxes}
+            </div>
+        </div>
+
         <select id="sort-select" onchange="filterRecords()" title="Sort records" style="margin-left:8px;">
             <option value="default">Default: Map / Vehicle Alphabetically</option>
             <option value="dist-asc">Distance ↑ (ascending)</option>
             <option value="dist-desc">Distance ↓ (descending)</option>
+            <option value="most-recent">Most Recent (newest first)</option>
         </select>
 
         <div class="distance-filter" style="display:inline-block; margin-left:8px;">
@@ -1050,6 +1094,7 @@ function filterRecords() {
 const searchQuery = (document.getElementById('search-bar')?.value || '').toLowerCase();
 const mapSelected = getSelectedMultiValues('map');
 const vehicleSelected = getSelectedMultiValues('vehicle');
+const tuningSelected = getSelectedMultiValues('tuning');
 const distOp = document.getElementById('distance-op')?.value || '';
 const distValRaw = document.getElementById('distance-value')?.value;
 const distVal = distValRaw ? Number(distValRaw) : NaN;
@@ -1061,6 +1106,8 @@ const filteredData = (allData || []).filter(record => {
 
     const matchesMap = !mapSelected || mapSelected.length === 0 || mapSelected.includes(record.map_name);
     const matchesVehicle = !vehicleSelected || vehicleSelected.length === 0 || vehicleSelected.includes(record.vehicle_name);
+    const recordParts = record.tuning_parts ? record.tuning_parts.split(', ').map(p => p.trim()) : [];
+    const matchesTuning = !tuningSelected || tuningSelected.length === 0 || tuningSelected.every(part => recordParts.includes(part));
 
     let matchesDistance = true;
     if (distOp === 'gte' && !isNaN(distVal)) {
@@ -1069,7 +1116,7 @@ const filteredData = (allData || []).filter(record => {
         matchesDistance = Number(record.distance) <= distVal;
     }
 
-    return matchesSearch && matchesMap && matchesVehicle && matchesDistance;
+    return matchesSearch && matchesMap && matchesVehicle && matchesTuning && matchesDistance;
 });
 
 displayData(filteredData, currentDataType);
