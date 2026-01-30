@@ -507,6 +507,56 @@ mapStarsHTML += `<div class="total-stars-value">${formatDistance(totalMapStars)}
 mapStarsHTML += '</div></div>';
 statsContainer.innerHTML += mapStarsHTML;
 
+// Tuning Part Statistics
+const tuningPartStats = {};
+const tuningSetupStats = {};
+data.forEach(record => {
+    if (record.tuning_parts) {
+        const parts = record.tuning_parts.split(', ');
+        parts.forEach(part => {
+            if (!tuningPartStats[part]) {
+                tuningPartStats[part] = 0;
+            }
+            tuningPartStats[part]++;
+        });
+    }
+    if (record.idTuningSetup) {
+        const setupKey = `Setup ${record.idTuningSetup}`;
+        if (!tuningSetupStats[setupKey]) {
+            tuningSetupStats[setupKey] = { count: 0, parts: record.tuning_parts || '' };
+        }
+        tuningSetupStats[setupKey].count++;
+    }
+});
+
+let tuningHTML = '<div class="stats-section"><h3>Tuning Part Statistics</h3><div class="tuning-stats">';
+
+// Most used individual tuning parts
+const sortedParts = Object.entries(tuningPartStats).sort((a, b) => b[1] - a[1]).slice(0, 10);
+if (sortedParts.length > 0) {
+    tuningHTML += '<div class="stat-subsection"><h4>Most Used Individual Parts</h4><table>';
+    tuningHTML += '<tr><th>Rank</th><th>Part</th><th>Usage Count</th></tr>';
+    sortedParts.forEach((part, index) => {
+        tuningHTML += `<tr><td>${index + 1}</td><td>${renderTuningPartWithIcon(part[0])}</td><td>${part[1]}</td></tr>`;
+    });
+    tuningHTML += '</table></div>';
+}
+
+// Most used setups
+const sortedSetups = Object.entries(tuningSetupStats).sort((a, b) => b[1].count - a[1].count).slice(0, 10);
+if (sortedSetups.length > 0) {
+    tuningHTML += '<div class="stat-subsection"><h4>Most Used Setups</h4><table>';
+    tuningHTML += '<tr><th>Rank</th><th>Setup</th><th>Usage Count</th></tr>';
+    sortedSetups.forEach((setup, index) => {
+        const setupName = setup[0] + (setup[1].parts ? `: ${setup[1].parts}` : '');
+        tuningHTML += `<tr><td>${index + 1}</td><td>${setupName}</td><td>${setup[1].count}</td></tr>`;
+    });
+    tuningHTML += '</table></div>';
+}
+
+tuningHTML += '</div></div>';
+statsContainer.innerHTML += tuningHTML;
+
 const totalRecords = data.length;
 const totalDistance = data.reduce((sum, record) => sum + record.distance, 0);
 const avgDistance = (totalDistance / totalRecords).toFixed(2);

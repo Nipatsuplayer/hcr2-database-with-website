@@ -72,6 +72,18 @@ if (!$logged || !$allowed) {
     </div>
 
     <div class="form-container">
+        <h2>Assign Tuning Setup to Existing Record 🔧</h2>
+        <form id="assign-setup-form" onsubmit="assignSetup(event)">
+            <label>Record (without tuning setup)</label>
+            <select id="assign-record-select" required><option value="">Select a record</option></select>
+            <label>Tuning Setup</label>
+            <select id="assign-tuning-setup-select" required><option value="">Select a setup</option></select>
+            <button type="submit">Assign Setup</button>
+        </form>
+        <p id="assign-message"></p>
+    </div>
+
+    <div class="form-container">
         <h2>Add a Vehicle ➕</h2>
         <form id="add-vehicle-form" onsubmit="addVehicle(event)">
             <label>Vehicle Name</label>
@@ -208,12 +220,15 @@ function populateFormOptions() {
         container.innerHTML = '';
         (data || []).forEach(p => {
             const label = document.createElement('label');
-            label.style.display = 'block';
-            label.innerHTML = `<input type="checkbox" value="${p.idTuningPart}"> ${p.nameTuningPart}`;
+            const iconName = p.nameTuningPart.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+            const svgSrc = `/img/tuning_parts_icons/${iconName}.svg`;
+            const pngSrc = `/img/tuning_parts_icons/${iconName}.png`;
+            label.innerHTML = `<input type="checkbox" value="${p.idTuningPart}"><img class="admin-tuning-icon" src="${svgSrc}" alt="${esc(p.nameTuningPart)} icon" onerror="this.src='${pngSrc}'; this.onerror=null; if(!this.complete) this.style.display='none';"> ${esc(p.nameTuningPart)}`;
             container.appendChild(label);
         });
     });
     populateDeleteOptions();
+    populateAssignSetupOptions();
 }
 
 function populateDeleteOptions() {
@@ -225,6 +240,27 @@ function populateDeleteOptions() {
             opt.value = r.idRecord;
             opt.textContent = `${r.distance} - ${r.map_name} - ${r.vehicle_name} - ${r.player_name}`;
             sel.appendChild(opt);
+        });
+    });
+}
+
+function populateAssignSetupOptions() {
+    fetchJSON('/php/load_data.php?type=records').then(data => {
+        const sel = document.getElementById('assign-record-select');
+        sel.innerHTML = '<option value="">Select a record</option>';
+        (data || []).filter(r => !r.idTuningSetup).forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.idRecord;
+            opt.textContent = `${r.distance} - ${r.map_name} - ${r.vehicle_name} - ${r.player_name}`;
+            sel.appendChild(opt);
+        });
+    });
+    fetchJSON('/php/load_data.php?type=tuning_setups').then(data => {
+        const sel = document.getElementById('assign-tuning-setup-select');
+        sel.innerHTML = '<option value="">Select a setup</option>';
+        (data || []).forEach(s => {
+            const parts = s.parts ? s.parts.map(p => p.nameTuningPart).join(', ') : '';
+            sel.appendChild(new Option(`Setup ${s.idTuningSetup}: ${parts}`, s.idTuningSetup));
         });
     });
 }
@@ -333,6 +369,38 @@ function deleteRecord(e) {
     }).catch(()=> showDeleteMessage('Error deleting record.', true));
 }
 
+function assignSetup(e) {
+    e.preventDefault();
+    const recordId = document.getElementById('assign-record-select').value;
+    const tuningSetupId = document.getElementById('assign-tuning-setup-select').value;
+    
+    if (!recordId || !tuningSetupId) {
+        showAssignMessage('Please select both a record and a tuning setup.', true);
+        return;
+    }
+
+    fetch('/php/assign_setup.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ recordId, tuningSetupId })
+    }).then(async resp => {
+        const data = await resp.json().catch(()=>({ error: 'Invalid server response' }));
+        if (!resp.ok) {
+            showAssignMessage(data.error || 'Server error', true);
+            return;
+        }
+        if (data.success) {
+            showAssignMessage('Tuning setup assigned successfully!', false);
+            document.getElementById('assign-setup-form').reset();
+            populateAssignSetupOptions();
+            populateDeleteOptions();
+        } else {
+            showAssignMessage(data.error || 'Unknown error', true);
+        }
+    }).catch(()=> showAssignMessage('Error assigning setup.', true));
+}
+
 function showFormMessage(msg, isError) {
     const el = document.getElementById('form-message');
     el.textContent = msg;
@@ -340,6 +408,11 @@ function showFormMessage(msg, isError) {
 }
 function showDeleteMessage(msg, isError) {
     const el = document.getElementById('delete-message');
+    el.textContent = msg;
+    el.style.color = isError ? 'red' : 'green';
+}
+function showAssignMessage(msg, isError) {
+    const el = document.getElementById('assign-message');
     el.textContent = msg;
     el.style.color = isError ? 'red' : 'green';
 }

@@ -1480,6 +1480,62 @@ tr:hover {
   object-fit: contain;
 }
 
+.tuning-part-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  vertical-align: middle;
+}
+
+.tuning-part-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  display: inline-block;
+  object-fit: contain;
+}
+
+.admin-tuning-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  display: inline-block;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Admin tuning part checkboxes */
+#tuning-parts-checkboxes label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 4px !important;
+  cursor: pointer;
+}
+
+#tuning-parts-checkboxes input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .tuning-part-cell {
+    gap: 6px;
+  }
+  
+  .tuning-part-icon {
+    margin-left: 4px;
+  }
+  
+  .admin-tuning-icon {
+    margin-left: 2px;
+  }
+  
+  #tuning-parts-checkboxes label {
+    gap: 6px !important;
+  }
+}
+
 @media (min-width: 769px) {
   .pie-container {
     flex-wrap: nowrap;
@@ -1521,6 +1577,46 @@ tr:hover {
   min-width: 150px;
   text-align: center;
   color: var(--text);
+}
+
+.tuning-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.stat-subsection {
+  background: var(--card-bg);
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  min-width: 300px;
+  flex: 1;
+}
+
+.stat-subsection h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.stat-subsection table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stat-subsection table th,
+.stat-subsection table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.stat-subsection table th {
+  background: var(--header-bg);
+  font-weight: 600;
 }
 
 [data-theme="dark"] .stat-box {
@@ -1585,10 +1681,6 @@ tr:hover {
   .stats-section h3 {
     font-size: 16px;
     margin-bottom: 10px;
-  }
-
-  .chart-container {
-    max-width: 100%;
   }
 
   .player-name {

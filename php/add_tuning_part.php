@@ -25,6 +25,14 @@ if (empty($partName)) {
 }
 
 try {
+    // Check if tuning part already exists
+    $stmt = $db->prepare("SELECT idTuningPart FROM TuningPart WHERE nameTuningPart = :name");
+    $stmt->execute([':name' => $partName]);
+    if ($stmt->fetch()) {
+        echo json_encode(['error' => 'A tuning part with this name already exists.']);
+        exit;
+    }
+    
     $stmt = $db->prepare("INSERT INTO TuningPart (nameTuningPart) VALUES (:name)");
     $stmt->execute([':name' => $partName]);
     echo json_encode(['success' => true]);

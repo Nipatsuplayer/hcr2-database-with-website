@@ -2,6 +2,17 @@
 require_once __DIR__ . '/config.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+// Debug logging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Log the request
+file_put_contents(__DIR__ . '/discord_debug.log', date('Y-m-d H:i:s') . " - Callback received\n", FILE_APPEND);
+file_put_contents(__DIR__ . '/discord_debug.log', "Session save path: " . session_save_path() . "\n", FILE_APPEND);
+file_put_contents(__DIR__ . '/discord_debug.log', "Session ID: " . session_id() . "\n", FILE_APPEND);
+file_put_contents(__DIR__ . '/discord_debug.log', "GET params: " . print_r($_GET, true), FILE_APPEND);
+file_put_contents(__DIR__ . '/discord_debug.log', "POST params: " . print_r($_POST, true), FILE_APPEND);
+
 function request($url, $method = 'GET', $headers = [], $body = null, $timeout = 10) {
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
@@ -12,8 +23,8 @@ function request($url, $method = 'GET', $headers = [], $body = null, $timeout = 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
         if (!empty($headers)) curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         $resp = curl_exec($ch);
         $err = curl_error($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -39,8 +50,8 @@ function request($url, $method = 'GET', $headers = [], $body = null, $timeout = 
             'ignore_errors' => true
         ],
         'ssl' => [
-            'verify_peer' => true,
-            'verify_peer_name' => true
+            'verify_peer' => false,
+            'verify_peer_name' => false
         ]
     ];
     $ctx = stream_context_create($opts);
@@ -58,11 +69,16 @@ function request($url, $method = 'GET', $headers = [], $body = null, $timeout = 
 }
 
 if (!isset($_GET['code'])) {
+    file_put_contents(__DIR__ . '/discord_debug.log', "No code parameter found\n", FILE_APPEND);
+    if (isset($_GET['error'])) {
+        file_put_contents(__DIR__ . '/discord_debug.log', "OAuth error: " . $_GET['error'] . "\n", FILE_APPEND);
+    }
     http_response_code(400);
     echo "Missing code parameter.";
     exit;
 }
 $code = $_GET['code'];
+file_put_contents(__DIR__ . '/discord_debug.log', "Authorization code received: " . substr($code, 0, 10) . "...\n", FILE_APPEND);
 
 if (empty($DISCORD_CLIENT_ID) || empty($DISCORD_CLIENT_SECRET) || empty($DISCORD_REDIRECT_URI)) {
     http_response_code(500);
@@ -80,7 +96,10 @@ $post_fields = http_build_query([
 ]);
 
 $resp = request($token_url, 'POST', ['Content-Type: application/x-www-form-urlencoded'], $post_fields);
+file_put_contents(__DIR__ . '/discord_debug.log', "Token request response code: " . $resp['code'] . "\n", FILE_APPEND);
+file_put_contents(__DIR__ . '/discord_debug.log', "Token request response: " . substr($resp['body'], 0, 200) . "\n", FILE_APPEND);
 if ($resp['error']) {
+    file_put_contents(__DIR__ . '/discord_debug.log', "Token request error: " . $resp['error'] . "\n", FILE_APPEND);
     http_response_code(502);
     echo "Token request failed: " . htmlspecialchars($resp['error']);
     exit;
@@ -106,7 +125,10 @@ $accessToken = $tokenData['access_token'];
 $user_url = 'https://discord.com/api/users/@me';
 $auth_header = "Authorization: Bearer {$accessToken}";
 $resp = request($user_url, 'GET', [$auth_header]);
+file_put_contents(__DIR__ . '/discord_debug.log', "User info request response code: " . $resp['code'] . "\n", FILE_APPEND);
+file_put_contents(__DIR__ . '/discord_debug.log', "User info request response: " . substr($resp['body'], 0, 200) . "\n", FILE_APPEND);
 if ($resp['error']) {
+    file_put_contents(__DIR__ . '/discord_debug.log', "User info request error: " . $resp['error'] . "\n", FILE_APPEND);
     http_response_code(502);
     echo "User info request failed: " . htmlspecialchars($resp['error']);
     exit;
@@ -130,8 +152,10 @@ if (!empty($ALLOWED_DISCORD_IDS) && isset($_SESSION['discord']['id'])) {
 }
 
 if ($allowed) {
+    file_put_contents(__DIR__ . '/discord_debug.log', "Login successful for user: " . $_SESSION['discord']['username'] . " (ID: " . $_SESSION['discord']['id'] . ")\n", FILE_APPEND);
     header('Location: /../php/admin.php', true, 302);
 } else {
+    file_put_contents(__DIR__ . '/discord_debug.log', "Login failed - user not allowed: " . $_SESSION['discord']['username'] . " (ID: " . $_SESSION['discord']['id'] . ")\n", FILE_APPEND);
     header('Location: /index.html', true, 302);
 }
 exit;
