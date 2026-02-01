@@ -2,6 +2,46 @@ let allData = [];
 let currentDataType = ''; 
 let allPlayers = []; 
 
+// Simple in-memory cache for frequently requested JSON data
+window._dataCache = window._dataCache || {};
+function cachedFetchJson(url, ttl = 60000) {
+    const key = url;
+    const now = Date.now();
+    const existing = window._dataCache[key];
+    if (existing && (now - existing.ts) < ttl) {
+        return Promise.resolve(existing.value);
+    }
+    return fetch(url, {cache: 'no-store'}).then(r => r.json()).then(j => {
+        window._dataCache[key] = { ts: Date.now(), value: j };
+        return j;
+    });
+}
+
+// Smooth show/hide helpers to avoid abrupt flashing
+function showElementWithFade(el) {
+    if (!el) return;
+    el.style.display = 'block';
+    el.style.willChange = 'opacity, transform';
+    el.style.opacity = 0;
+    el.style.transform = 'translateY(6px)';
+    requestAnimationFrame(() => {
+        el.style.transition = 'opacity 260ms ease, transform 260ms ease';
+        el.style.opacity = 1;
+        el.style.transform = 'translateY(0)';
+    });
+}
+
+function hideElementWithFade(el) {
+    if (!el) return;
+    el.style.willChange = 'opacity, transform';
+    el.style.transition = 'opacity 200ms ease, transform 200ms ease';
+    el.style.opacity = 0;
+    el.style.transform = 'translateY(6px)';
+    setTimeout(() => {
+        if (el) el.style.display = 'none';
+    }, 220);
+}
+
 // =============== DARK MODE TOGGLE ===============
 function initDarkMode() {
     const savedMode = localStorage.getItem('darkMode');
@@ -136,6 +176,10 @@ function getCountryCode(country) {
 function renderCountryWithFlag(country) {
     const code = getCountryCode(country);
     const name = country || '';
+    // Don't render a flag for the grouped "Other countries" bucket
+    if (String(name).trim().toLowerCase() === 'other countries') {
+        return esc(name);
+    }
     if (code) {
         // Use FlagCDN small PNGs (https://flagcdn.com)
         const src = `https://flagcdn.com/24x18/${code}.png`;
@@ -205,34 +249,35 @@ function fetchWithTimeout(resource, options = {}, timeout = 3000) {
 
 
 function fetchStats() {
-const statsContainer = document.getElementById('stats-container');
-const dataContainer = document.getElementById('data-container');
-const filterContainer = document.getElementById('filter-container');
+    // close mobile menu for better UX
+    if (window.closeMobileMenu) try { window.closeMobileMenu(); } catch (e) {}
 
-if (currentDataType === 'stats' && statsContainer.style.display === 'block') {
-    statsContainer.style.display = 'none';
-    currentDataType = '';
-    return;
-}
+    const statsContainer = document.getElementById('stats-container');
+    const dataContainer = document.getElementById('data-container');
+    const filterContainer = document.getElementById('filter-container');
 
-currentDataType = 'stats';
-dataContainer.style.display = 'none';
-if (filterContainer) filterContainer.style.display = 'none';
-statsContainer.style.display = 'block';
+    if (currentDataType === 'stats' && statsContainer && statsContainer.style.display === 'block') {
+        hideElementWithFade(statsContainer);
+        currentDataType = '';
+        return;
+    }
 
-    fetch('php/load_data.php?type=records&t=' + Date.now())
-    .then(response => response.json())
+    currentDataType = 'stats';
+    if (dataContainer) hideElementWithFade(dataContainer);
+    if (filterContainer) hideElementWithFade(filterContainer);
+    if (statsContainer) showElementWithFade(statsContainer);
+
+    cachedFetchJson('php/load_data.php?type=records&t=' + Date.now(), 60000)
     .then(data => {
         if (data.error) {
             console.error('Error:', data.error);
-            statsContainer.innerHTML = '<p style="color:red;">' + data.error + '</p>';
+            if (statsContainer) statsContainer.innerHTML = '<p style="color:red;">' + data.error + '</p>';
         } else {
             displayStats(data);
         }
-    })
-    .catch(error => {
+    }).catch(error => {
         console.error('Fetch error:', error);
-        statsContainer.innerHTML = '<p style="color:red;">Error fetching stats data from server.</p>';
+        if (statsContainer) statsContainer.innerHTML = '<p style="color:red;">Error fetching stats data from server.</p>';
     });
 }
 
@@ -803,45 +848,40 @@ function downloadCSV(dataArray) {
 
 
 function fetchData(dataType) {
-const container = document.getElementById('data-container');
-const filterContainer = document.getElementById('filter-container');
-const statsContainer = document.getElementById('stats-container');
-statsContainer.style.display = 'none';
+    // close mobile menu if open (mobile UX)
+    if (window.closeMobileMenu) try { window.closeMobileMenu(); } catch (e) {}
 
-if (currentDataType === dataType && container.style.display === 'block') {
-    container.style.display = 'none';
-    if (filterContainer) filterContainer.style.display = 'none'; 
-    currentDataType = ''; 
-    return;
-}
+    const container = document.getElementById('data-container');
+    const filterContainer = document.getElementById('filter-container');
+    const statsContainer = document.getElementById('stats-container');
 
-currentDataType = dataType;
-container.style.display = 'block';
+    // toggle off
+    if (currentDataType === dataType && container && container.style.display === 'block') {
+        hideElementWithFade(container);
+        if (filterContainer) hideElementWithFade(filterContainer);
+        currentDataType = '';
+        return;
+    }
 
-// Reset and remove existing filter container when switching data types
-resetFilters();
-if (filterContainer) {
-    filterContainer.remove();
-}
+    currentDataType = dataType;
+    if (container) showElementWithFade(container);
 
-if (dataType === 'records' || dataType === 'players') {
-    // Filters will be created fresh by addSearchAndFilter() or addPlayerFilters()
-} else {
-    // No filters for maps, vehicles, players (old filter will be gone)
-}
+    // Reset and remove existing filter container when switching data types
+    resetFilters();
+    if (filterContainer) filterContainer.remove();
 
-    fetch('php/load_data.php?type=' + dataType + '&t=' + Date.now())
-    .then(response => response.json())
+    // hide stats panel if visible
+    if (statsContainer) hideElementWithFade(statsContainer);
+
+    cachedFetchJson('php/load_data.php?type=' + dataType + '&t=' + Date.now(), 60000)
     .then(data => {
         if (data.error) {
             console.error('Error:', data.error);
-            container.innerHTML = '<p style="color:red;">' + data.error + '</p>';
+            if (container) container.innerHTML = '<p style="color:red;">' + data.error + '</p>';
         } else {
             allData = data;
-            
             if (dataType === 'players') {
-                fetch('php/load_data.php?type=records&t=' + Date.now())
-                    .then(recordsRes => recordsRes.json())
+                cachedFetchJson('php/load_data.php?type=records&t=' + Date.now(), 60000)
                     .then(recordsData => {
                         const playerRecordCounts = {};
                         (recordsData || []).forEach(record => {
@@ -850,8 +890,7 @@ if (dataType === 'records' || dataType === 'players') {
                         });
                         window.playerRecordCounts = playerRecordCounts;
                         displayData(data, dataType);
-                    })
-                    .catch(err => {
+                    }).catch(err => {
                         console.error('Failed to load records for player counts', err);
                         window.playerRecordCounts = {};
                         displayData(data, dataType);
@@ -860,10 +899,9 @@ if (dataType === 'records' || dataType === 'players') {
                 displayData(data, dataType);
             }
         }
-    })
-    .catch(error => {
+    }).catch(error => {
         console.error('Fetch error:', error);
-        container.innerHTML = '<p style="color:red;">Error fetching data from server.</p>';
+        if (container) container.innerHTML = '<p style="color:red;">Error fetching data from server.</p>';
     });
 }
 
@@ -918,13 +956,7 @@ const container = document.getElementById('data-container');
 container.innerHTML = ''; 
 
 
-if (dataType === 'records' && !document.getElementById('filter-container')) {
-    addSearchAndFilter();
-}
-
-if (dataType === 'players' && !document.getElementById('filter-container')) {
-    addPlayerFilters();
-}
+// Filters will be rendered below based on the active `dataType`.
 
 container.innerHTML += '<h2>' + dataType.toUpperCase() + '</h2>'; 
 
@@ -986,95 +1018,94 @@ if (dataType === 'maps') {
             return Number(bId) - Number(aId);
         });
     } else {
+        // Default sort: map name, then vehicle id, then vehicle name
         records.sort((a, b) => {
-            const ai = getMapId(a), bi = getMapId(b);
-            if (ai !== null && bi !== null && ai !== bi) return ai - bi;
-
             const mapComp = String(a.map_name || a.nameMap || '').localeCompare(String(b.map_name || b.nameMap || ''));
             if (mapComp !== 0) return mapComp;
-
             const av = getVehicleId(a), bv = getVehicleId(b);
             if (av !== null && bv !== null && av !== bv) return av - bv;
-
             return String(a.vehicle_name || a.nameVehicle || '').localeCompare(String(b.vehicle_name || b.nameVehicle || ''));
         });
     }
 
     tableHTML += '<thead><tr><th>Distance</th><th>Map Name</th><th>Vehicle Name</th><th>Tuning Parts</th><th>Player Name</th><th>Player Country</th></tr></thead><tbody>';
     records.forEach(item => {
-        tableHTML += `<tr>
-                <td data-label="Distance">${formatDistance(item.distance)}</td>
-                <td data-label="Map">${renderMapWithIcon(item.map_name)}</td>
-                <td data-label="Vehicle">${renderVehicleWithIcon(item.vehicle_name)}</td>
-                <td data-label="Tuning Parts">${renderTuningParts(item.tuning_parts)}</td>
-                <td data-label="Player">${esc(item.player_name)}</td>
-                <td data-label="Country">${renderCountryWithFlag(item.player_country)}</td>
-                </tr>`;
+        const rid = item.idRecord ?? item.record_id ?? '';
+        tableHTML += `<tr data-record-id="${rid}">
+            <td data-label="Distance">${formatDistance(item.distance)}</td>
+            <td data-label="Map">${renderMapWithIcon(item.map_name)}</td>
+            <td data-label="Vehicle">${renderVehicleWithIcon(item.vehicle_name)}</td>
+            <td data-label="Tuning Parts">${renderTuningParts(item.tuning_parts)}</td>
+            <td data-label="Player">${esc(item.player_name)}</td>
+            <td data-label="Country">${renderCountryWithFlag(item.player_country)}</td>
+            <td data-label="Share"><button class="share-btn" onclick="copyShareLink('record', '${rid}', '${esc(item.map_name)}')">🔗 Copy Link</button></td>
+            </tr>`;
     });
     tableHTML += '</tbody>';
 }
-tableHTML += '</table>';
-container.innerHTML += tableHTML;
+    tableHTML += '</table>';
+    container.innerHTML += tableHTML;
+if (dataType === 'records') {
+    const maps = [...new Set(allData.map(record => record.map_name))].filter(Boolean).sort();
+    const vehicles = [...new Set(allData.map(record => record.vehicle_name))].filter(Boolean).sort();
+    const tuningParts = [...new Set(allData.flatMap(record => record.tuning_parts ? record.tuning_parts.split(', ').map(p => p.trim()) : []))].filter(Boolean).sort();
+
+    const mapCheckboxes = maps.map(m => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(m)}" onchange="onMultiFilterChange('map')"> ${renderMapWithIcon(m)}</label>`).join('');
+    const vehicleCheckboxes = vehicles.map(v => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(v)}" onchange="onMultiFilterChange('vehicle')"> ${renderVehicleWithIcon(v)}</label>`).join('');
+    const tuningPartCheckboxes = tuningParts.map(p => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(p)}" onchange="onMultiFilterChange('tuning')"> ${renderTuningPartWithIcon(p)}</label>`).join('');
+
+    const searchHTML = `
+        <div id="filter-container" class="filter-container">
+            <input type="text" id="search-bar" placeholder="Search by player, map, or vehicle..." oninput="filterRecords()">
+            <button id="export-btn" onclick="exportToCSV()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background-color: #28a745; color: white; cursor: pointer; font-size: 14px; margin-left: 8px;">📥 Export CSV</button>
+
+            <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
+                <button id="map-btn" onclick="toggleDropdown('map')" type="button">Filter by Map</button>
+                <div id="map-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Maps</strong><button type="button" onclick="clearMultiFilter('map')" style="font-size:12px;">Clear</button></div>
+                    ${mapCheckboxes}
+                </div>
+            </div>
+
+            <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
+                <button id="vehicle-btn" onclick="toggleDropdown('vehicle')" type="button">Filter by Vehicle</button>
+                <div id="vehicle-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Vehicles</strong><button type="button" onclick="clearMultiFilter('vehicle')" style="font-size:12px;">Clear</button></div>
+                    ${vehicleCheckboxes}
+                </div>
+            </div>
+
+            <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
+                <button id="tuning-btn" onclick="toggleDropdown('tuning')" type="button">Filter by Tuning Parts</button>
+                <div id="tuning-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Tuning Parts</strong><button type="button" onclick="clearMultiFilter('tuning')" style="font-size:12px;">Clear</button></div>
+                    ${tuningPartCheckboxes}
+                </div>
+            </div>
+
+            <select id="sort-select" onchange="filterRecords()" title="Sort records" style="margin-left:8px;">
+                <option value="default">Default: Map / Vehicle Alphabetically</option>
+                <option value="dist-asc">Distance ↑ (ascending)</option>
+                <option value="dist-desc">Distance ↓ (descending)</option>
+                <option value="most-recent">Most Recent (newest first)</option>
+            </select>
+
+            <div class="distance-filter" style="display:inline-block; margin-left:8px;">
+                <select id="distance-op" onchange="filterRecords()">
+                    <option value="">Distance</option>
+                    <option value="gte">≥</option>
+                    <option value="lte">≤</option>
+                </select>
+                <input type="number" id="distance-value" placeholder="Distance" oninput="filterRecords()" style="width:120px; margin-left:6px;">
+            </div>
+        </div>
+    `;
+    // ensure we don't duplicate container
+    if (!document.getElementById('filter-container')) container.insertAdjacentHTML('beforebegin', searchHTML);
+} else if (dataType === 'players') {
+    if (!document.getElementById('filter-container')) addPlayerFilters();
 }
 
-
-function addSearchAndFilter() {
-const container = document.getElementById('data-container');
-const maps = [...new Set(allData.map(record => record.map_name))].filter(Boolean).sort();
-const vehicles = [...new Set(allData.map(record => record.vehicle_name))].filter(Boolean).sort();
-const tuningParts = [...new Set(allData.flatMap(record => record.tuning_parts ? record.tuning_parts.split(', ').map(p => p.trim()) : []))].filter(Boolean).sort();
-
-const mapCheckboxes = maps.map(m => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(m)}" onchange="onMultiFilterChange('map')"> ${renderMapWithIcon(m)}</label>`).join('');
-const vehicleCheckboxes = vehicles.map(v => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(v)}" onchange="onMultiFilterChange('vehicle')"> ${renderVehicleWithIcon(v)}</label>`).join('');
-const tuningPartCheckboxes = tuningParts.map(p => `<label style="display:block; padding:4px 6px;"><input type="checkbox" value="${esc(p)}" onchange="onMultiFilterChange('tuning')"> ${renderTuningPartWithIcon(p)}</label>`).join('');
-
-const searchHTML = `
-    <div id="filter-container" class="filter-container">
-        <input type="text" id="search-bar" placeholder="Search by player, map, or vehicle..." oninput="filterRecords()">
-        <button id="export-btn" onclick="exportToCSV()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; background-color: #28a745; color: white; cursor: pointer; font-size: 14px; margin-left: 8px;">📥 Export CSV</button>
-
-        <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
-            <button id="map-btn" onclick="toggleDropdown('map')" type="button">Filter by Map</button>
-            <div id="map-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Maps</strong><button type="button" onclick="clearMultiFilter('map')" style="font-size:12px;">Clear</button></div>
-                ${mapCheckboxes}
-            </div>
-        </div>
-
-        <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
-            <button id="vehicle-btn" onclick="toggleDropdown('vehicle')" type="button">Filter by Vehicle</button>
-            <div id="vehicle-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Vehicles</strong><button type="button" onclick="clearMultiFilter('vehicle')" style="font-size:12px;">Clear</button></div>
-                ${vehicleCheckboxes}
-            </div>
-        </div>
-
-        <div class="multi-dropdown" style="display:inline-block; position:relative; margin-left:8px;">
-            <button id="tuning-btn" onclick="toggleDropdown('tuning')" type="button">Filter by Tuning Parts</button>
-            <div id="tuning-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Tuning Parts</strong><button type="button" onclick="clearMultiFilter('tuning')" style="font-size:12px;">Clear</button></div>
-                ${tuningPartCheckboxes}
-            </div>
-        </div>
-
-        <select id="sort-select" onchange="filterRecords()" title="Sort records" style="margin-left:8px;">
-            <option value="default">Default: Map / Vehicle Alphabetically</option>
-            <option value="dist-asc">Distance ↑ (ascending)</option>
-            <option value="dist-desc">Distance ↓ (descending)</option>
-            <option value="most-recent">Most Recent (newest first)</option>
-        </select>
-
-        <div class="distance-filter" style="display:inline-block; margin-left:8px;">
-            <select id="distance-op" onchange="filterRecords()">
-                <option value="">Distance</option>
-                <option value="gte">≥</option>
-                <option value="lte">≤</option>
-            </select>
-            <input type="number" id="distance-value" placeholder="Distance" oninput="filterRecords()" style="width:120px; margin-left:6px;">
-        </div>
-    </div>
-`;
-container.insertAdjacentHTML('beforebegin', searchHTML);
 }
 
 function toggleDropdown(type) {
@@ -1086,6 +1117,52 @@ function toggleDropdown(type) {
         if (p !== panel) p.style.display = 'none';
     });
     panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+}
+
+function copyToClipboard(text) {
+    if (!text) return false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).then(()=>true).catch(()=>false);
+    }
+    // fallback
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed'; ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        return Promise.resolve(true);
+    } catch (e) {
+        return Promise.resolve(false);
+    }
+}
+
+function copyShareLink(type, id, mapName) {
+    const url = new URL(window.location.href);
+    if (type === 'record') {
+        url.searchParams.set('view','records');
+        if (id) url.searchParams.set('recordId', id);
+        if (mapName) url.searchParams.set('map', mapName);
+    } else if (type === 'map') {
+        url.searchParams.set('view','records');
+        if (id) url.searchParams.set('mapId', id);
+    }
+    copyToClipboard(url.toString()).then(ok => {
+        const btn = document.activeElement;
+        if (ok) {
+            if (btn && btn.classList && btn.classList.contains('share-btn')) {
+                const orig = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(()=> btn.textContent = orig, 2000);
+            } else {
+                alert('Link copied to clipboard');
+            }
+        } else {
+            alert('Failed to copy link.');
+        }
+    });
 }
 
 function getSelectedMultiValues(type) {
@@ -1186,10 +1263,9 @@ const searchHTML = `
             <div id="country-panel" class="dropdown-panel" style="display:none; position:absolute; background:#fff; border:1px solid #ccc; padding:8px; max-height:220px; overflow:auto; z-index:50;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;"><strong>Countries</strong><button type="button" onclick="clearMultiFilter('country')" style="font-size:12px;">Clear</button></div>
                 ${countryCheckboxes}
+                </div>
             </div>
-        </div>
 
-        <div class="player-record-filter" style="display:inline-block; margin-left:8px;">
             <select id="record-count-op" onchange="filterPlayers()">
                 <option value="">Records</option>
                 <option value="gte">≥</option>
@@ -1197,9 +1273,10 @@ const searchHTML = `
             </select>
             <input type="number" id="record-count-value" placeholder="Count" oninput="filterPlayers()" style="width:100px; margin-left:6px;" min="0">
         </div>
-    </div>
-`;
-container.insertAdjacentHTML('beforebegin', searchHTML);
+    `;
+
+    container.insertAdjacentHTML('beforebegin', searchHTML);
+
 }
 
 function filterPlayers() {
@@ -1341,6 +1418,8 @@ function publicSubmitKeyHandler(e) {
 }
 
 function togglePublicSubmitForm() {
+    // close mobile menu when opening the modal for better UX on mobile
+    if (window.closeMobileMenu) try { window.closeMobileMenu(); } catch (e) {}
     const overlay = document.getElementById('public-submit-overlay');
     if (!overlay) return;
     const isOpen = overlay.style.display === 'block';
@@ -1426,6 +1505,7 @@ function initializeHCaptcha() {
 // token handling is wired via the `callback` option passed to `hcaptcha.render` above
 
 function toggleNewsModal() {
+    if (window.closeMobileMenu) try { window.closeMobileMenu(); } catch (e) {}
     const overlay = document.getElementById('news-overlay');
     if (!overlay) return;
     const isOpen = overlay.style.display === 'block';
@@ -1483,6 +1563,21 @@ async function populatePublicSubmitOptions() {
         if (vehicleSel && Array.isArray(vehicles)) {
             vehicleSel.innerHTML = '<option value="">Select a Vehicle</option>' + vehicles.map(v => `<option value="${esc(v.idVehicle)}">${esc(v.nameVehicle)}</option>`).join('');
         }
+        // Load tuning parts and render checkboxes
+        try {
+            const partsRes = await fetch('php/load_data.php?type=tuning_parts&t=' + Date.now());
+            const parts = await partsRes.json();
+            const partsContainer = document.getElementById('public-tuning-parts');
+            if (partsContainer && Array.isArray(parts)) {
+                partsContainer.innerHTML = parts.map(p => {
+                    const id = esc(p.idTuningPart || p.id || '');
+                    const name = esc(p.nameTuningPart || p.nameTuningPart || p.name || '');
+                    return `<label><input type="checkbox" name="public-tuning-part" value="${name}" id="public-tuning-part-${id}"> ${name}</label>`;
+                }).join('');
+            }
+        } catch (err) {
+            console.error('Failed to load tuning parts for public submit', err);
+        }
     } catch (err) {
         console.error('Failed to load maps/vehicles for public submit', err);
     }
@@ -1503,6 +1598,14 @@ async function submitPublicRecord(e) {
     }
     if (isNaN(Number(distance)) || Number(distance) <= 0) {
         if (msgEl) { msgEl.textContent = 'Distance must be a positive number.'; msgEl.style.color = 'red'; }
+        return;
+    }
+
+    // Validate tuning parts selection (must be 3 or 4)
+    const selectedPartEls = document.querySelectorAll('#public-tuning-parts input[type="checkbox"]:checked');
+    const selectedParts = Array.from(selectedPartEls).map(el => el.value);
+    if (selectedParts.length < 3 || selectedParts.length > 4) {
+        if (msgEl) { msgEl.textContent = 'Please choose 3 or 4 tuning parts for the record.'; msgEl.style.color = 'red'; }
         return;
     }
 
@@ -1529,6 +1632,7 @@ async function submitPublicRecord(e) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 mapId, vehicleId, distance: Number(distance), playerName, playerCountry,
+            tuningParts: selectedParts,
                 h_captcha_response: hcaptchaResponse,
                 hp_email: hp_email,
                 hp_website: hp_website,
@@ -1731,67 +1835,103 @@ function exportToCSV() {
 
 // ...existing code...
 
-(function(){
-  function closeMenu() {
+// Mobile menu helpers (top-level, exposes functions on window)
+function closeMenu() {
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
     if (!btn || !menu) return;
     btn.setAttribute('aria-expanded','false');
     menu.setAttribute('aria-hidden','true');
     document.body.classList.remove('mobile-menu-open');
-  }
-  function openMenu() {
+}
+
+function openMenu() {
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
     if (!btn || !menu) return;
     btn.setAttribute('aria-expanded','true');
     menu.setAttribute('aria-hidden','false');
     document.body.classList.add('mobile-menu-open');
-  }
-  window.toggleMobileMenu = function(){
+}
+
+window.toggleMobileMenu = function(){
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
     if (!btn || !menu) return;
     const open = btn.getAttribute('aria-expanded') === 'true';
     if (open) closeMenu(); else openMenu();
-  };
+};
 
-  document.addEventListener('click', function(e){
+// expose helpers for other code to control mobile menu
+window.closeMobileMenu = closeMenu;
+window.openMobileMenu = openMenu;
+
+document.addEventListener('click', function(e){
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
     if (!btn || !menu) return;
     if (btn.contains(e.target) || menu.contains(e.target)) return;
     if (btn.getAttribute('aria-expanded') === 'true') closeMenu();
-  });
+});
 
-  window.addEventListener('resize', function(){
+window.addEventListener('resize', function(){
     const btn = document.getElementById('mobile-menu-btn');
     const menu = document.getElementById('mobile-menu');
     if (!btn || !menu) return;
     if (window.innerWidth >= 800) {
-      // ensure menu visible on desktop
-      menu.removeAttribute('aria-hidden');
-      btn.setAttribute('aria-expanded','false');
-      document.body.classList.remove('mobile-menu-open');
+        // ensure menu visible on desktop
+        menu.removeAttribute('aria-hidden');
+        btn.setAttribute('aria-expanded','false');
+        document.body.classList.remove('mobile-menu-open');
     } else {
-      // keep it closed by default on small screens
-      menu.setAttribute('aria-hidden','true');
-      btn.setAttribute('aria-expanded','false');
-      document.body.classList.remove('mobile-menu-open');
+        // keep it closed by default on small screens
+        menu.setAttribute('aria-hidden','true');
+        btn.setAttribute('aria-expanded','false');
+        document.body.classList.remove('mobile-menu-open');
     }
-  });
+});
 
-  // initialize state on load
-  document.addEventListener('DOMContentLoaded', function(){
+// initialize state on load
+document.addEventListener('DOMContentLoaded', function(){
     const menu = document.getElementById('mobile-menu');
     const btn = document.getElementById('mobile-menu-btn');
     if (!menu || !btn) return;
     if (window.innerWidth >= 800) {
-      menu.removeAttribute('aria-hidden');
-      btn.setAttribute('aria-expanded','false');
+        menu.removeAttribute('aria-hidden');
+        btn.setAttribute('aria-expanded','false');
     } else {
-      menu.setAttribute('aria-hidden','true');
-      btn.setAttribute('aria-expanded','false');
+        menu.setAttribute('aria-hidden','true');
+        btn.setAttribute('aria-expanded','false');
     }
-  });
-})();
+});
+
+// Handle URL params: allow linking to a specific view/record/map
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const view = params.get('view');
+        const recordId = params.get('recordId');
+        const map = params.get('map');
+        if (view) {
+            // fetch the requested view
+            fetchData(view);
+            if (recordId) {
+                // wait shortly for rows to render, then scroll to the record
+                setTimeout(() => {
+                    const row = document.querySelector(`[data-record-id="${recordId}"]`);
+                    if (row) {
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        row.style.background = 'rgba(255,255,0,0.12)';
+                        setTimeout(()=> row.style.background = '', 3000);
+                    }
+                }, 600);
+            } else if (map) {
+                // apply a simple scroll to first map match after render
+                setTimeout(() => {
+                    const el = Array.from(document.querySelectorAll('[data-label="Map"]')).find(td => td && td.textContent && td.textContent.includes(map));
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 600);
+            }
+        }
+    } catch (e) {}
+});

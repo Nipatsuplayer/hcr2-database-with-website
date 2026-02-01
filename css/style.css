@@ -1446,8 +1446,8 @@ tr:hover {
 }
 
 .country-flag {
-  vertical-align: middle;
   display: block;
+  margin: auto;
 }
 
 .map-cell {
@@ -1536,6 +1536,26 @@ tr:hover {
   vertical-align: middle;
 }
 
+/* Public submit tuning parts container (checkboxes added dynamically) */
+#public-tuning-parts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+#public-tuning-parts label {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 8px 4px 0;
+  white-space: nowrap;
+}
+
+#public-tuning-parts input[type="checkbox"] {
+  width: auto !important;
+  margin: 0 !important;
+}
+
 @media (max-width: 768px) {
   .tuning-part-cell {
     gap: 6px;
@@ -1602,7 +1622,8 @@ tr:hover {
 }
 
 .stat-subsection {
-  background: var(--card-bg);
+  /* make subsection slightly translucent so background remains visible */
+  background: rgba(255,255,255,0.92);
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
@@ -1621,6 +1642,28 @@ tr:hover {
   border-collapse: collapse;
 }
 
+/* Prevent stat tables from visually overflowing the translucent subsection card.
+   Remove the table's own background/box-shadow and keep spacing inside the card. */
+.stat-subsection {
+  overflow: auto; /* allow horizontal scroll if table is wide */
+}
+
+.stat-subsection table {
+  margin: 0; /* avoid global table vertical margins pushing outside the card */
+  background: transparent; /* let the subsection's translucent background show through */
+  box-shadow: none; /* avoid extra shadow that appears to float above the card */
+}
+
+.stat-subsection table th,
+.stat-subsection table td {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.stat-subsection table th {
+  background: rgba(255,255,255,0.02);
+}
+
 .stat-subsection table th,
 .stat-subsection table td {
   padding: 6px 8px;
@@ -1637,6 +1680,11 @@ tr:hover {
 [data-theme="dark"] .stat-box {
   background: #2d2d2d;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark theme translucent stat subsections */
+[data-theme="dark"] .stat-subsection {
+  background: rgba(45,45,45,0.88);
 }
 
 /* Slightly tighter table styles for stats tables */
@@ -1800,6 +1848,14 @@ tr:hover {
     max-width: 100%;
   }
 
+  /* Smooth transitions for panels on small screens */
+  #data-container, #stats-container {
+    transition: opacity 220ms ease, transform 220ms ease;
+    opacity: 1;
+    transform: translateY(0);
+    will-change: opacity, transform;
+  }
+
   /* Apply fixed layout and wrapping to any table inside those containers */
   #data-container table,
   #stats-container table,
@@ -1820,6 +1876,12 @@ tr:hover {
     word-break: break-word !important;
     overflow-wrap: anywhere !important;
   }
+}
+
+/* Global panel transitions for desktop */
+#data-container, #stats-container {
+  transition: opacity 220ms ease, transform 220ms ease;
+  will-change: opacity, transform;
 }
 
 /* ================= ADMIN TABLE RESPONSIVE STYLES ================= */

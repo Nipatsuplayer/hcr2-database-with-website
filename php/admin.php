@@ -569,11 +569,12 @@ async function loadPendingSubmissions() {
             container.textContent = 'No pending submissions.';
             return;
         }
-        let html = '<table class="admin-pending-table"><thead><tr><th>ID</th><th>Map</th><th>Vehicle</th><th>Distance</th><th>Player</th><th>Country</th><th>When</th><th>Actions</th></tr></thead><tbody>';
+        let html = '<table class="admin-pending-table"><thead><tr><th>ID</th><th>Map</th><th>Vehicle</th><th>Distance</th><th>Player</th><th>Country</th><th>Tuning Parts</th><th>When</th><th>Actions</th></tr></thead><tbody>';
         pending.forEach(p => {
             const mapLabel = p.mapName ? p.mapName : p.idMap;
             const vehicleLabel = p.vehicleName ? p.vehicleName : p.idVehicle;
-            html += `<tr><td data-label="ID">${p.id}</td><td data-label="Map">${mapLabel}</td><td data-label="Vehicle">${vehicleLabel}</td><td data-label="Distance">${p.distance}</td><td data-label="Player">${p.playerName}</td><td data-label="Country">${p.playerCountry}</td><td data-label="When">${p.submitted_at}</td><td data-label="Actions"><button onclick="approveSubmission(${p.id})">Approve</button> <button onclick="rejectSubmission(${p.id})" style="background:#ccc;color:#000;">Reject</button></td></tr>`;
+            const tuning = p.tuningParts ? esc(p.tuningParts) : '';
+            html += `<tr><td data-label="ID">${p.id}</td><td data-label="Map">${mapLabel}</td><td data-label="Vehicle">${vehicleLabel}</td><td data-label="Distance">${p.distance}</td><td data-label="Player">${p.playerName}</td><td data-label="Country">${p.playerCountry}</td><td data-label="Tuning Parts">${tuning}</td><td data-label="When">${p.submitted_at}</td><td data-label="Actions"><button onclick="approveSubmission(${p.id})">Approve</button> <button onclick="rejectSubmission(${p.id})" style="background:#ccc;color:#000;">Reject</button></td></tr>`;
         });
         html += '</tbody></table>';
         container.innerHTML = html;

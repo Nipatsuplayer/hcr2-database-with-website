@@ -94,6 +94,16 @@ $honeypot_phone = isset($data['hp_phone']) ? trim($data['hp_phone']) : '';
 $honeypot_comments = isset($data['hp_comments']) ? trim($data['hp_comments']) : '';
 $form_load_time = isset($data['form_load_time']) ? (int)$data['form_load_time'] : 0;
 $submission_time = isset($data['submission_time']) ? (int)$data['submission_time'] : 0;
+// Tuning parts (expected as array of names)
+$tuningParts = isset($data['tuningParts']) ? $data['tuningParts'] : [];
+if (!is_array($tuningParts)) {
+    // Try to handle comma-separated string
+    if (is_string($tuningParts)) {
+        $tuningParts = array_filter(array_map('trim', explode(',', $tuningParts)));
+    } else {
+        $tuningParts = [];
+    }
+}
 
 // Verify hCaptcha first
 if (!verify_hcaptcha($hcaptcha_response, $HCAPTCHA_SECRET_KEY)) {
@@ -137,6 +147,13 @@ if ($distance <= 0) {
     exit;
 }
 
+// Validate tuning parts server-side: require 3 or 4 parts
+if (count($tuningParts) < 3 || count($tuningParts) > 4) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Please provide 3 or 4 tuning parts for the record.']);
+    exit;
+}
+
 try {
     $db->exec("CREATE TABLE IF NOT EXISTS PendingSubmission (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -145,10 +162,27 @@ try {
         distance INTEGER,
         playerName TEXT,
         playerCountry TEXT,
+        tuningParts TEXT,
         submitterIp TEXT,
         status TEXT DEFAULT 'pending',
         submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+
+    // Ensure the tuningParts column exists in older databases where the table was created previously
+    try {
+        $cols = $db->query("PRAGMA table_info('PendingSubmission')")->fetchAll(PDO::FETCH_ASSOC);
+        $hasTuning = false;
+        foreach ($cols as $c) {
+            if (isset($c['name']) && $c['name'] === 'tuningParts') { $hasTuning = true; break; }
+        }
+        if (!$hasTuning) {
+            // SQLite supports ADD COLUMN; new column will be NULL by default
+            $db->exec("ALTER TABLE PendingSubmission ADD COLUMN tuningParts TEXT");
+        }
+    } catch (Exception $e) {
+        // Non-fatal: if migration fails, continue and rely on insert to throw a clear error
+        error_log('PendingSubmission migration: ' . $e->getMessage());
+    }
 
     $ip = $_SERVER['REMOTE_ADDR'] ?? '';
     if ($ip) {
@@ -161,13 +195,14 @@ try {
             exit;
         }
     }
-    $stmt = $db->prepare('INSERT INTO PendingSubmission (idMap, idVehicle, distance, playerName, playerCountry, submitterIp) VALUES (:idMap, :idVehicle, :distance, :playerName, :playerCountry, :ip)');
+    $stmt = $db->prepare('INSERT INTO PendingSubmission (idMap, idVehicle, distance, playerName, playerCountry, tuningParts, submitterIp) VALUES (:idMap, :idVehicle, :distance, :playerName, :playerCountry, :tuningParts, :ip)');
     $stmt->execute([
         ':idMap' => $mapId,
         ':idVehicle' => $vehicleId,
         ':distance' => $distance,
         ':playerName' => $playerName,
         ':playerCountry' => $playerCountry,
+        ':tuningParts' => implode(', ', $tuningParts),
         ':ip' => $_SERVER['REMOTE_ADDR'] ?? ''
     ]);
 

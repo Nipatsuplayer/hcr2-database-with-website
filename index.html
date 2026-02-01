@@ -54,8 +54,8 @@
                     <button onclick="fetchData('maps')">Get Maps</button>
                     <button onclick="fetchData('vehicles')">Get Vehicles</button>
                     <button onclick="fetchData('players')">Get Players</button>
-                    <button onclick="fetchData('records')">Get Records</button>
                     <button onclick="fetchData('tuning_parts')">Get Tuning Parts</button>
+                    <button onclick="fetchData('records')">Get Records</button>
                     <button onclick="fetchStats()">Stats</button>
                     <button onclick="togglePublicSubmitForm()">Submit Record</button>
                     <span id="news-btn-container"><button onclick="toggleNewsModal()">News</button></span>
@@ -140,6 +140,8 @@
                     <input type="text" id="public-player-name" required>
                     <label>Country (optional)</label>
                     <input type="text" id="public-player-country">
+                    <label>Tuning parts (choose 3 or 4)</label>
+                    <div id="public-tuning-parts" style="text-align:left; max-height:180px; overflow:auto; border:1px solid rgba(0,0,0,0.06); padding:8px; border-radius:8px; background:transparent;"></div>
                     <!-- hCaptcha verification -->
                     <div id="hcaptcha-widget" data-sitekey="" required></div>
                     <input type="hidden" id="h-captcha-response" name="h_captcha_response">
