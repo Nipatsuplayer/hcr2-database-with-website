@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/maintenance_helpers.php';
+require_once __DIR__ . '/../auth/config.php';
 enforce_maintenance_json();
 
 header('Content-Type: application/json');
@@ -8,6 +9,7 @@ header('Content-Type: application/json');
 try {
     $db = get_database_connection();
 } catch (PDOException $e) {
+    http_response_code(500);
     echo json_encode(array('error' => "Database connection failed: " . $e->getMessage()));
     exit;
 }
